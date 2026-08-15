@@ -127,6 +127,8 @@ services:
     volumes:
       - hermes_data:/opt/data
       - ./hermes/config.yaml:/opt/data/config.yaml:ro
+      - ./hermes/SOUL.md:/opt/data/SOUL.md:ro
+      - ./hermes/skills:/opt/data/skills:ro
     networks:
       - backend
     depends_on:
