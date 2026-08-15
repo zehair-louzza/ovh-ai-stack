@@ -2,6 +2,15 @@
 
 Règle : **une seule commande à la fois**. Collez, validez, lisez le résultat, passez à la suivante. Les pipes multi-lignes cassent sous Windows PowerShell 5.
 
+Deux machines, deux invites. Ne jamais mélanger.
+
+| Invite | Où vous êtes | Commandes autorisées |
+|---|---|---|
+| `PS C:\...>` | Windows | `Test-Path`, `ssh-keygen -f $env:USERPROFILE\...`, `Get-Content` |
+| `ubuntu@vps-...:~$` | VPS Linux | `sudo`, `docker`, `git`, `nano`, `exit` |
+
+Si vous voyez `ubuntu@vps-...$`, tapez `exit` avant toute commande PowerShell.
+
 Hôte : `vps-b377201e.vps.ovh.net` · IP `162.19.44.2` · user `ubuntu`
 
 ---
