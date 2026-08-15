@@ -1,0 +1,26 @@
+# Hermes Agent — modèle local uniquement (pas d'appel cloud par défaut).
+# Doc : https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+# base_url force l'endpoint custom et ignore le provider cloud.
+
+model: qwen3.6:27b
+provider: custom
+base_url: http://ollama:11434/v1
+api_key: ollama-local
+
+auxiliary:
+  compression:
+    provider: main
+    model: qwen3.6:27b
+    base_url: http://ollama:11434/v1
+    api_key: ollama-local
+  vision:
+    provider: main
+    model: qwen3.6:27b
+    base_url: http://ollama:11434/v1
+    api_key: ollama-local
+
+delegation:
+  base_url: http://ollama:11434/v1
+  api_key: ollama-local
+  model: qwen3.6:27b
+  api_mode: chat_completions

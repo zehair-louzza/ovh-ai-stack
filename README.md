@@ -1,0 +1,58 @@
+# ovh-ai-stack
+
+Stack IA auto-hébergée pour [Blueseatra](https://github.com/zehair-louzza/Blueseatra) sur VPS OVH (Roubaix).
+
+Ollama, Hermes Agent et n8n tournent dans des conteneurs séparés. Seul Caddy écoute sur Internet. Les documents clients ne quittent pas l'UE par défaut.
+
+## Pourquoi un dépôt à part
+
+- Blueseatra = produit SaaS (FastAPI / React / Supabase)
+- OracleMind = produit MCP Oracle (inchangé)
+- Ce dépôt = infra VPS (secrets, volumes, durcissement)
+
+Voir [ADR-001](docs/decisions/ADR-001-ovh-remplace-oracle.md).
+
+## Architecture
+
+```
+Internet
+   │  80 / 443
+   ▼
+ Caddy (TLS + X-Api-Key)
+   ├── PUBLIC_DOMAIN  → ollama:11434   (extraction Blueseatra)
+   ├── N8N_HOST       → n8n:5678
+   └── HERMES_HOST    → hermes:8642    (orchestration)
+```
+
+FastAPI (Render, Francfort) appelle `https://$PUBLIC_DOMAIN/api/chat` avec `X-Api-Key`.
+n8n déclenche les flux déterministes. Hermes Agent n'a pas le droit de calculer un prix.
+
+## Prérequis déjà faits sur le VPS
+
+- Ubuntu 24.04.4 — `ubuntu@vps-b377201e.vps.ovh.net`
+- Docker 29.7.2 + Compose v5.4.0
+- UFW 22 / 80 / 443
+- Swap 4 Go
+
+Reste : reboot noyau, clés SSH, secrets, DNS, `compose up`, modèles.
+
+## Suite de l'installation
+
+Guide unique, commandes **une par une** (PowerShell casse les pipes multi-lignes) :
+
+→ **[docs/GUIDE-POWERSHELL.md](docs/GUIDE-POWERSHELL.md)**
+
+## RGPD / sécurité
+
+- [docs/RGPD.md](docs/RGPD.md)
+- [docs/SECURITE.md](docs/SECURITE.md)
+- [docs/DECOMMISSION-ORACLE.md](docs/DECOMMISSION-ORACLE.md)
+
+## Sources officielles
+
+- [Ollama Docker](https://docs.ollama.com/docker)
+- [Ollama bind / OLLAMA_HOST](https://docs.ollama.com/faq)
+- [Hermes Agent Docker](https://hermes-agent.nousresearch.com/docs/user-guide/docker)
+- [n8n Docker Compose](https://docs.n8n.io/deploy/host-n8n/install-options/use-a-cloud-provider/use-docker-compose)
+- [Caddy matchers](https://caddyserver.com/docs/caddyfile/matchers)
+- [qwen3.6:27b](https://ollama.com/library/qwen3.6:27b) · [hermes3](https://ollama.com/library/hermes3)
