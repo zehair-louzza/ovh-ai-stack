@@ -34,7 +34,7 @@ n8n déclenche les flux déterministes. Hermes Agent n'a pas le droit de calcule
 - UFW 22 / 80 / 443
 - Swap 4 Go
 
-Reste : reboot noyau, clés SSH, secrets, DNS, `compose up`, modèles.
+Reste : reboot noyau, clés SSH, secrets, DNS (`ia` / `n8n` / `hermes`.blueseatra.com), `compose up`, modèles.
 
 ## Suite de l'installation
 

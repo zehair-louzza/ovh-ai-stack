@@ -8,11 +8,11 @@ Hôte : `vps-b377201e.vps.ovh.net` · IP `162.19.44.2` · user `ubuntu`
 
 ## 0. Avant de commencer
 
-Dans le manager OVH / votre registrar, créez 3 enregistrements DNS **A** vers `162.19.44.2` :
+Dans [hPanel Hostinger](https://hpanel.hostinger.com) → Domaines → `blueseatra.com` → Zone DNS, créez 3 enregistrements **A** vers `162.19.44.2` :
 
-- `ia.votredomaine.tld`
-- `n8n.votredomaine.tld`
-- `hermes.votredomaine.tld`
+- `ia` → `ia.blueseatra.com`
+- `n8n` → `n8n.blueseatra.com`
+- `hermes` → `hermes.blueseatra.com`
 
 Sans DNS, Let's Encrypt échouera. Vous pouvez quand même durcir SSH et lancer Docker, et brancher Caddy plus tard.
 
@@ -156,7 +156,7 @@ bash scripts/generate-secrets.sh
 nano .env
 ```
 
-Remplacez `ia.example.com`, `n8n.example.com`, `hermes.example.com`, `contact@example.com` par vos vrais hôtes et e-mail ACME. Enregistrez : `Ctrl+O`, Entrée, `Ctrl+X`.
+Vérifiez que `.env` contient déjà `ia.blueseatra.com`, `n8n.blueseatra.com`, `hermes.blueseatra.com`. Ajustez seulement `ACME_EMAIL` si `contact@blueseatra.com` n'est pas une boîte que vous lisez. Enregistrez : `Ctrl+O`, Entrée, `Ctrl+X`.
 
 ```bash
 sudo bash scripts/host-hardening.sh
@@ -245,7 +245,7 @@ grep OLLAMA_API_KEY .env
 Sur PowerShell, remplacez les deux valeurs :
 
 ```powershell
-$domain = "ia.votredomaine.tld"
+$domain = "ia.blueseatra.com"
 $key = "COLLEZ_LA_CLE"
 ```
 
@@ -267,7 +267,7 @@ Chat court (Hermes 3) :
 curl.exe -s -H "X-Api-Key: $key" -H "Content-Type: application/json" -d "{\"model\":\"hermes-3\",\"messages\":[{\"role\":\"user\",\"content\":\"dis seulement OK\"}],\"stream\":false}" https://$domain/api/chat
 ```
 
-n8n : ouvrez `https://n8n.votredomaine.tld` et créez le compte owner **immédiatement**.
+n8n : ouvrez `https://n8n.blueseatra.com` et créez le compte owner **immédiatement**.
 
 ---
 
@@ -277,7 +277,7 @@ Variables backend :
 
 | Variable | Valeur |
 |---|---|
-| `HERMES_BASE_URL` | `https://ia.votredomaine.tld` |
+| `HERMES_BASE_URL` | `https://ia.blueseatra.com` |
 | `HERMES_DEFAULT_MODEL` | `hermes-3` |
 | `HERMES_API_KEY` | la même que `OLLAMA_API_KEY` |
 
@@ -304,7 +304,7 @@ Si ça marche, le mot de passe SSH est déjà désactivé par `host-hardening.sh
 | Symptôme | Action |
 |---|---|
 | `Permission denied (publickey)` | `ssh-add $env:USERPROFILE\.ssh\ovh_vps` puis réessayer `ssh ovh-vps` |
-| Caddy `NXDOMAIN` / ACME fail | DNS A pas encore propagé : `nslookup ia.votredomaine.tld` |
+| Caddy `NXDOMAIN` / ACME fail | DNS A pas encore propagé : `nslookup ia.blueseatra.com` |
 | Hermes restart loop | `docker compose logs hermes` — souvent Ollama pas ready |
 | OOM / freeze | passer sur `qwen2.5:14b` |
 | `docker: command not found` après reboot | `sudo usermod -aG docker ubuntu` puis se reconnecter |
