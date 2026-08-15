@@ -42,8 +42,10 @@ New-Item -ItemType Directory -Path $env:USERPROFILE\.ssh -Force
 ```
 
 ```powershell
-ssh-keygen -t ed25519 -f $env:USERPROFILE\.ssh\ovh_vps -C "louzza-ovh-vps" -N ""
+ssh-keygen -t ed25519 -f "$env:USERPROFILE\.ssh\ovh_vps" -C louzza-ovh-vps -N '""'
 ```
+
+Sous PowerShell 5, `-N ""` est ignoré. Les simples quotes autour de `""` sont obligatoires.
 
 ```powershell
 Get-Content $env:USERPROFILE\.ssh\ovh_vps.pub
