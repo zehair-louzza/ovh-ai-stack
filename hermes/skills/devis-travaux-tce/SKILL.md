@@ -4,7 +4,7 @@ description: "Création de devis professionnels pour travaux d'aménagement, ré
 license: MIT
 metadata:
   author: louzza-zehair
-  version: '2.1'
+  version: '2.2'
   domain: "BTP — aménagement, rénovation, maintenance multitechnique TCE"
 ---
 
@@ -35,6 +35,7 @@ Lire le fichier pertinent **avant** de produire le livrable correspondant :
 | Fichier | Quand le lire |
 |---|---|
 | `references/regles-chiffrage.md` | Toujours, avant tout chiffrage : marges, arrondis, main-d'œuvre, déplacement, quantités, unités d'achat, déboursé sec |
+| `references/estimation-chantier.md` | Avant d'estimer les heures : barèmes réalistes MO / pose / jours de déplacement |
 | `references/tva-mentions-legales.md` | Avant de calculer la TVA ou de générer un PDF client : taux 20 %/10 %/5,5 %/0 %, franchise en base et autres cas de TVA 0 %, attestation TVA taux réduit, mentions légales obligatoires |
 | `references/lots-tce.md` | Pour structurer un devis en lots : nomenclature TCE, ordre des lots, prestations à ne pas oublier par lot |
 | `references/livrables-xlsx-pdf.md` | Avant de générer le XLSX interne ou le PDF client : structure des feuilles, colonnes, mise en page, confidentialité |
@@ -202,8 +203,8 @@ Pour chaque demande de devis :
 3. Lister les travaux et les structurer en lots si pertinent (voir `references/lots-tce.md`).
 4. Rechercher les fournitures **uniquement** dans le catalogue ; signaler les articles absents.
 5. Vérifier quantités, unités, et unités d'achat (arrondi au conditionnement supérieur).
-6. Calculer la main-d'œuvre en heures-homme ; contrôler la limite 7 h/j/personne.
-7. Calculer les jours de déplacement (= jours réels d'intervention, sauf consigne contraire).
+6. Estimer le chantier (voir `references/estimation-chantier.md`) : heures-homme de pose + install/repli, puis jours de déplacement.
+7. Contrôler la limite 7 h/j/personne ; jours de déplacement = jours réels de présence.
 8. Appliquer les marges et arrondis (voir `references/regles-chiffrage.md`).
 9. Déterminer le taux de TVA applicable ligne par ligne (voir `references/tva-mentions-legales.md`).
 10. Rédiger la description des travaux, les hypothèses et exclusions.
