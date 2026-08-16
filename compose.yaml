@@ -122,7 +122,7 @@ services:
     environment:
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://ollama:11434/v1}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-ollama-local}
-      HERMES_MODEL: ${HERMES_MODEL:-qwen3.6:27b}
+      HERMES_MODEL: ${HERMES_MODEL:-gemma4:26b}
       HERMES_DASHBOARD: "0"
     volumes:
       - hermes_data:/opt/data
