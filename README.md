@@ -27,13 +27,14 @@ Internet
 FastAPI (Render, Francfort) appelle `https://$PUBLIC_DOMAIN/api/chat` avec `X-Api-Key`.
 n8n déclenche les flux déterministes. Hermes Agent n'a pas le droit de calculer un prix.
 
-Slots Hermes (voir [ADR-002](docs/decisions/ADR-002-hermes-slots-extraction-generation-raisonnement.md)) :
+Slots Hermes (voir [ADR-003](docs/decisions/ADR-003-hermes-raisonnement-gemma4.md)) :
 
 | Rôle Blueseatra | Clé Hermes | Modèle |
 |---|---|---|
-| Génération + raisonnement | `model` + `agent.reasoning_effort` | `qwen3.6:27b` |
+| Raisonnement | `model` + `agent.reasoning_effort` | `gemma4:26b` |
 | Extraction / sous-agents | `delegation` + `auxiliary.web_extract` | `qwen2.5:14b` |
-| Secours local | `fallback_providers` | `qwen2.5:14b` puis `hermes3` |
+| Secours local | `fallback_providers` | `qwen3.6:27b` puis `qwen2.5:14b` puis `hermes3` |
+| Génération devis SaaS | hors Hermes (FastAPI → Ollama) | `qwen3.6:27b` |
 
 ## Prérequis déjà faits sur le VPS
 
@@ -64,4 +65,4 @@ Guide unique, commandes **une par une** (PowerShell casse les pipes multi-lignes
 - [Hermes configuration](https://hermes-agent.nousresearch.com/docs/user-guide/configuration)
 - [n8n Docker Compose](https://docs.n8n.io/deploy/host-n8n/install-options/use-a-cloud-provider/use-docker-compose)
 - [Caddy matchers](https://caddyserver.com/docs/caddyfile/matchers)
-- [qwen3.6:27b](https://ollama.com/library/qwen3.6:27b) · [hermes3](https://ollama.com/library/hermes3)
+- [gemma4:26b](https://ollama.com/library/gemma4:26b) · [qwen3.6:27b](https://ollama.com/library/qwen3.6:27b) · [hermes3](https://ollama.com/library/hermes3)

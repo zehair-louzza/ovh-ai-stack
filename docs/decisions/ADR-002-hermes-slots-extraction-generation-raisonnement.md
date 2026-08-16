@@ -1,10 +1,13 @@
 # ADR-002 : Slots Hermes pour extraction, génération et raisonnement
 
 ## Statut
-Accepté
+Remplacé par [ADR-003](ADR-003-hermes-raisonnement-gemma4.md) pour le modèle principal / raisonnement. Extraction et interdiction de `provider: auto` restent valides.
 
 ## Date
 2026-08-16
+
+## Remplacé le
+2026-08-17 — `gemma4:26b` installé sur le VPS.
 
 ## Contexte
 Blueseatra v2 sépare trois rôles IA : extraction (routeur / parse), génération (texte devis), raisonnement (contrôle matériaux / lots). Hermes Agent n'expose pas de slots nommés `extraction`, `génération` ou `raisonnement`.

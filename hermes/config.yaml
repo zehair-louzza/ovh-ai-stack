@@ -6,31 +6,38 @@
 #   https://hermes-agent.nousresearch.com/docs/user-guide/features/fallback-providers
 #
 # Hermes n'a pas de slots nommés extraction / génération / raisonnement.
-# Mapping Blueseatra v2 → clés documentées :
-#   génération + raisonnement  →  model (principal) + agent.reasoning_effort
+# Mapping Blueseatra v2 → clés documentées (ADR-003) :
+#   raisonnement              →  model (principal) + agent.reasoning_effort
+#                                « what the agent thinks with »
 #   extraction / tâches légères →  delegation + auxiliary.web_extract (+ slots rapides)
-# Vision reste sur le 27B : aucun modèle VL dédié n'est installé.
-# Gemma 4 26B-A4B / DeepSeek-R1 32B : non installés — ne pas les pointer.
+#   génération SaaS           →  FastAPI → Ollama (ia.blueseatra.com), pas ce fichier
+# Vision = même modèle que le principal : Gemma 4 26B A4B est multimodal.
+# DeepSeek-R1 32B : non installé — ne pas le pointer.
 # OLLAMA_MAX_LOADED_MODELS=1 : un seul modèle en RAM. provider: auto interdit
 # (la découverte auxiliaire tenterait OpenRouter / Nous Portal).
 
-model: qwen3.6:27b
+model: gemma4:26b
 provider: custom
 base_url: http://ollama:11434/v1
 api_key: ollama-local
 
 # Raisonnement = effort du modèle principal, pas un slot dédié.
-# Vide = medium. high = contrôle matériaux / lots avant génération.
+# Vide = medium. high = contrôle matériaux / lots.
 agent:
   reasoning_effort: high
   reasoning_overrides:
+    "gemma4:26b": high
     "qwen3.6:27b": high
     "qwen2.5:14b": none
     "hermes3": none
     "hermes-3": none
 
-# Si le 27B échoue (OOM, timeout), bascule locale uniquement.
+# Si Gemma échoue (OOM, timeout), bascule locale uniquement.
 fallback_providers:
+  - provider: custom
+    model: qwen3.6:27b
+    base_url: http://ollama:11434/v1
+    key_env: OPENAI_API_KEY
   - provider: custom
     model: qwen2.5:14b
     base_url: http://ollama:11434/v1
@@ -69,10 +76,10 @@ auxiliary:
         base_url: http://ollama:11434/v1
         api_key: ollama-local
 
-  # Pas de modèle vision installé : rester sur le principal.
+  # Gemma 4 26B A4B accepte texte + image — rester sur le principal.
   vision:
     provider: main
-    model: qwen3.6:27b
+    model: gemma4:26b
     base_url: http://ollama:11434/v1
     api_key: ollama-local
     timeout: 120
