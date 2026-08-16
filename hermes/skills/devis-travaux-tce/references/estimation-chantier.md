@@ -26,7 +26,7 @@ Toujours ajouter, s'ils ne sont pas déjà dans une tâche :
 | Nettoyage + repli | 0,50 |
 | Minimum de visite sur site | 2,00 |
 
-Arrondir les heures au **quart d'heure** supérieur.
+Arrondir les heures-homme à l’**heure pleine supérieure** (8,25 h → 9 h).
 
 Classer l'estimation **Estimé** (jamais Confirmé) tant que le métré n'est pas validé.
 
