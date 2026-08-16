@@ -145,3 +145,13 @@ delegation:
   worktree_isolation: false
   max_spawn_depth: 1
   orchestrator_enabled: false
+
+# API chat OpenAI-compatible (port 8642). La clé reste dans .env (API_SERVER_KEY).
+# Env Compose prime sur ce bloc.
+# https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server
+gateway:
+  api_server:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8642
+    max_concurrent_runs: 1
