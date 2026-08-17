@@ -16,10 +16,16 @@
 # OLLAMA_MAX_LOADED_MODELS=1 : un seul modèle en RAM. provider: auto interdit
 # (la découverte auxiliaire tenterait OpenRouter / Nous Portal).
 
-model: gemma4:26b
-provider: custom
-base_url: http://ollama:11434/v1
-api_key: ollama-local
+# Forme officielle : model est un mapping (provider, default, base_url, api_mode).
+# https://hermes-agent.nousresearch.com/docs/user-guide/configuring-models
+# https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+# provider: custom obligatoire pour un endpoint OpenAI-compatible local.
+model:
+  provider: custom
+  default: gemma4:26b
+  base_url: http://ollama:11434/v1
+  api_key: ollama-local
+  api_mode: chat_completions
 
 # Raisonnement = effort du modèle principal, pas un slot dédié.
 # Vide = medium. high = contrôle matériaux / lots.
@@ -139,3 +145,13 @@ delegation:
   worktree_isolation: false
   max_spawn_depth: 1
   orchestrator_enabled: false
+
+# API chat OpenAI-compatible (port 8642). La clé reste dans .env (API_SERVER_KEY).
+# Env Compose prime sur ce bloc.
+# https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server
+gateway:
+  api_server:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8642
+    max_concurrent_runs: 1

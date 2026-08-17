@@ -124,6 +124,13 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-ollama-local}
       HERMES_MODEL: ${HERMES_MODEL:-gemma4:26b}
       HERMES_DASHBOARD: "0"
+      # API OpenAI-compatible. 0.0.0.0 = joignable par Caddy (réseau Docker).
+      # Ne pas publier 8642 sur l'hôte : seul Caddy expose hermes.blueseatra.com.
+      # https://hermes-agent.nousresearch.com/docs/user-guide/docker
+      # https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server
+      API_SERVER_ENABLED: "true"
+      API_SERVER_HOST: "0.0.0.0"
+      API_SERVER_KEY: ${API_SERVER_KEY:?définir API_SERVER_KEY dans .env}
     volumes:
       - hermes_data:/opt/data
       - ./hermes/config.yaml:/opt/data/config.yaml:ro

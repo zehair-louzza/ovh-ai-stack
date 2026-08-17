@@ -61,7 +61,7 @@ Ne vont **jamais** dans le PDF client sans ordre explicite :
 
 Le PDF client contient :
 
-- **En-tête 3 colonnes** : Prestataire / Donneur d'ordre (client) / Site d'intervention. Les champs du bloc Prestataire (nom, adresse, SIRET, logo) proviennent du profil entreprise de l'utilisateur (équivalent `company_profiles` dans Blueseatra) ; ne jamais en inventer un champ manquant, le signaler « À confirmer ».
+- **En-tête 3 colonnes** : Prestataire / Donneur d'ordre (destinataire du devis) / Site d'intervention (enseigne + adresse). Le donneur n'est pas forcément l'enseigne « Client : ». Les champs du bloc Prestataire (nom, adresse, SIRET, logo) proviennent du profil entreprise de l'utilisateur (équivalent `company_profiles` dans Blueseatra) ; ne jamais en inventer un champ manquant, le signaler « À confirmer ».
 - Titre principal : `DEVIS N° [RÉFÉRENCE] — [CLIENT / ENSEIGNE] / [VILLE / SITE]`.
 - Référence, date, version (si pertinent), durée de validité.
 - Section **Objet** : description des travaux (issue des constats + demande).

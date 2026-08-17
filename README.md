@@ -21,7 +21,7 @@ Internet
  Caddy (TLS + X-Api-Key)
    ├── PUBLIC_DOMAIN  → ollama:11434   (FastAPI /api/chat — pas Hermes Agent)
    ├── N8N_HOST       → n8n:5678
-   └── HERMES_HOST    → hermes:8642    (orchestration, slots ci-dessous)
+   └── HERMES_HOST    → hermes:8642    (API chat /v1 + health, slots ci-dessous)
 ```
 
 FastAPI (Render, Francfort) appelle `https://$PUBLIC_DOMAIN/api/chat` avec `X-Api-Key`.
@@ -63,6 +63,7 @@ Guide unique, commandes **une par une** (PowerShell casse les pipes multi-lignes
 - [Ollama bind / OLLAMA_HOST](https://docs.ollama.com/faq)
 - [Hermes Agent Docker](https://hermes-agent.nousresearch.com/docs/user-guide/docker)
 - [Hermes configuration](https://hermes-agent.nousresearch.com/docs/user-guide/configuration)
+- [Hermes API server](https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server)
 - [n8n Docker Compose](https://docs.n8n.io/deploy/host-n8n/install-options/use-a-cloud-provider/use-docker-compose)
 - [Caddy matchers](https://caddyserver.com/docs/caddyfile/matchers)
 - [gemma4:26b](https://ollama.com/library/gemma4:26b) · [qwen3.6:27b](https://ollama.com/library/qwen3.6:27b) · [hermes3](https://ollama.com/library/hermes3)

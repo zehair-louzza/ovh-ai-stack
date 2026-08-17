@@ -26,3 +26,12 @@ Si un article est absent du catalogue :
 1. Tu crées quand même toutes les rubriques du devis (description, lots, sous-lots, déplacement, main-d'œuvre, fournitures).
 2. Tu laisses le prix unitaire et le total de cette ligne vides pour saisie humaine.
 3. Tu n'inventes jamais un montant.
+
+
+## Options exclusives
+
+Une demande peut contenir plusieurs devis. « soit A soit B », « ou les pièces suivantes », « option 1 / 2 » = un devis par alternative. ET / puis = un seul devis.
+
+Pour chaque devis : descriptif de travaux (périmètre, phases), justification du déplacement (jours de présence) et de la main-d'œuvre (heures-homme, max 7 h/j/personne). Aucun prix inventé.
+
+Lis le skill `devis-options-master` à chaque création de devis.

@@ -36,7 +36,11 @@ Conséquences pour ce skill :
 
 Blueseatra reçoit les demandes clients comme « ordres de mission » au format PDF, image ou texte (y compris texte d'e-mail), et les fait passer par une extraction IA (`requests.extracted`) avant rapprochement catalogue. Ce skill doit traiter une demande transmise par e-mail, fichier joint, capture d'écran ou texte libre avec la **même rigueur** qu'une extraction automatique :
 
-1. Identifier et extraire, quel que soit le canal : client, site d'intervention, objet de la demande, lignes de prestations pressenties, contraintes (délai, accès, horaires).
+1. Identifier et extraire, quel que soit le canal, **sans fusionner les parties** :
+   - donneur d'ordre (destinataire du devis, détecté dans le document courant — jamais une société en dur) ;
+   - client / enseigne (libellé « Client : ») ;
+   - site d'intervention ;
+   - objet, lignes pressenties, contraintes (délai, accès, horaires).
 2. Classer chaque champ extrait selon le niveau de fiabilité habituel du skill (Confirmé / Estimé / À confirmer) — un champ lu textuellement dans l'e-mail ou le PDF est `Confirmé` ; un champ déduit ou reformulé est `Estimé` ; un champ absent mais nécessaire est `À confirmer`.
 3. Ne jamais fusionner deux demandes de canaux différents sans le signaler si elles concernent le même client/site : le devis doit indiquer sa demande source (ex. « Demande reçue par e-mail le 12/08/2026 »).
 4. Si la demande est une image ou un PDF scanné dont le texte est partiellement illisible, signaler les zones illisibles comme `À confirmer` plutôt que de deviner leur contenu.
@@ -52,3 +56,16 @@ Dans `quotes`, chaque devis conserve un `pricing_snapshot` : une copie figée de
 ## 6. Multi-tenant : ne jamais mélanger deux organisations
 
 Si l'utilisateur gère plusieurs entités ou catalogues (par ex. plusieurs enseignes clientes de Blueseatra), toujours vérifier explicitement quelle entreprise/quel catalogue est actif avant de chiffrer, et ne jamais réutiliser un tarif ou un profil d'entreprise d'une autre organisation sans confirmation.
+
+
+## 7. Parties d'une demande (donneur / client / site)
+
+Sur les ordres de mission tertiaires, trois entités coexistent souvent :
+
+| Rôle | Question | Indices (exemples, pas une liste fermée) |
+|---|---|---|
+| Donneur d'ordre | À qui adresser le devis ? | « à adresser EXCLUSIVEMENT à », en-tête + SIRET de l'émetteur |
+| Client / enseigne | Pour quelle marque / quel magasin ? | Ligne « Client : » |
+| Site | Où intervenir ? | Bloc « Site d'intervention » |
+
+Le donneur d'ordre **change d'une demande à l'autre**. Ne jamais mémoriser un nom (PRESTA MAINTENANCE ou un autre) comme règle. Le PDF client s'adresse au donneur ; le titre peut citer l'enseigne et le site.
