@@ -4,7 +4,7 @@ description: "Création de devis professionnels pour travaux d'aménagement, ré
 license: MIT
 metadata:
   author: louzza-zehair
-  version: '2.2'
+  version: '2.1'
   domain: "BTP — aménagement, rénovation, maintenance multitechnique TCE"
 ---
 
@@ -35,7 +35,6 @@ Lire le fichier pertinent **avant** de produire le livrable correspondant :
 | Fichier | Quand le lire |
 |---|---|
 | `references/regles-chiffrage.md` | Toujours, avant tout chiffrage : marges, arrondis, main-d'œuvre, déplacement, quantités, unités d'achat, déboursé sec |
-| `references/estimation-chantier.md` | Avant d'estimer les heures : barèmes réalistes MO / pose / jours de déplacement |
 | `references/tva-mentions-legales.md` | Avant de calculer la TVA ou de générer un PDF client : taux 20 %/10 %/5,5 %/0 %, franchise en base et autres cas de TVA 0 %, attestation TVA taux réduit, mentions légales obligatoires |
 | `references/lots-tce.md` | Pour structurer un devis en lots : nomenclature TCE, ordre des lots, prestations à ne pas oublier par lot |
 | `references/livrables-xlsx-pdf.md` | Avant de générer le XLSX interne ou le PDF client : structure des feuilles, colonnes, mise en page, confidentialité |
@@ -101,7 +100,11 @@ Détail des formules et règles de calcul : voir `references/regles-chiffrage.md
 
 Une demande de devis peut arriver par différents canaux : texte libre, e-mail, PDF, photo/scan, notes de chantier (OneNote ou équivalent), ou formulaire. Quel que soit le canal :
 
-1. Extraire : client, site d'intervention, objet de la demande, prestations pressenties, contraintes (délai, accès, horaires, co-activité).
+1. Extraire **trois rôles distincts** (les noms changent à chaque demande, ne jamais figer une société) :
+   - **Donneur d'ordre** : destinataire légal du devis. Indices dans *ce* document : « Devis … à adresser EXCLUSIVEMENT à [NOM] », « Donneur d'ordre : », en-tête + SIRET/IBAN de l'émetteur de la demande.
+   - **Client / enseigne** : valeur du champ « Client : » (marque du site). Ce n'est pas le donneur d'ordre.
+   - **Site d'intervention** : adresse de la boutique / du chantier, pas le siège du donneur.
+   Puis : objet, prestations pressenties, contraintes (délai, accès, horaires, co-activité).
 2. Classer chaque champ extrait Confirmé / Estimé / À confirmer (voir section dédiée ci-dessous) — un champ lu textuellement est `Confirmé`, un champ déduit est `Estimé`, un champ nécessaire mais absent est `À confirmer`.
 3. Si une zone d'un document (photo, scan) est illisible, la signaler `À confirmer` plutôt que de deviner son contenu.
 4. Ne jamais fusionner silencieusement deux demandes distinctes portant sur le même client/site sans le signaler.
@@ -203,8 +206,8 @@ Pour chaque demande de devis :
 3. Lister les travaux et les structurer en lots si pertinent (voir `references/lots-tce.md`).
 4. Rechercher les fournitures **uniquement** dans le catalogue ; signaler les articles absents.
 5. Vérifier quantités, unités, et unités d'achat (arrondi au conditionnement supérieur).
-6. Estimer le chantier (voir `references/estimation-chantier.md`) : heures-homme de pose + install/repli, puis jours de déplacement.
-7. Contrôler la limite 7 h/j/personne ; jours de déplacement = jours réels de présence.
+6. Calculer la main-d'œuvre en heures-homme ; contrôler la limite 7 h/j/personne.
+7. Calculer les jours de déplacement (= jours réels d'intervention, sauf consigne contraire).
 8. Appliquer les marges et arrondis (voir `references/regles-chiffrage.md`).
 9. Déterminer le taux de TVA applicable ligne par ligne (voir `references/tva-mentions-legales.md`).
 10. Rédiger la description des travaux, les hypothèses et exclusions.
@@ -217,7 +220,7 @@ Pour chaque demande de devis :
 ## Checklist qualité avant livraison
 
 - [ ] Référence, version, date, statut présents.
-- [ ] Client, site, adresse présents si connus.
+- [ ] Donneur d'ordre, client/enseigne et site extraits séparément si le document les distingue.
 - [ ] Description des travaux cohérente avec les lignes chiffrées.
 - [ ] Tous les prix fournitures proviennent du catalogue ; aucun prix externe ou inventé.
 - [ ] Catalogue source non modifié.
