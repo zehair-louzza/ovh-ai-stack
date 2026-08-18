@@ -38,14 +38,15 @@ Les noms (donneur, client, site) changent à chaque document. Ne jamais figer un
 |---|---|
 | `label` | Titre court (ex. Remplacement total pompe) |
 | `description` | Périmètre de CETTE option seulement |
-| `line_items` | Fournitures / pièces de cette option |
+| `line_items` | Fournitures / pièces de cette option — **nom d'article seul**, sans le verbe d'action (voir règle ci-dessous) |
 | `labor_hours` | Heures-homme estimées (pas un prix) |
 | `travel_days` | Jours de présence chantier |
 | `crew_size` | 1 si moins de 6 h, sinon 2 |
 | `excludes` | Ce que cette option ne couvre pas (l'autre option) |
 
 4. Si aucune alternative : une seule option = la demande entière.
-5. En cas de doute réel (OU ambigu), créer quand même les options détectées et les marquer `Estimé` plutôt que de tout fusionner.
+5. **Nom d'article, pas phrase d'action.** Pour chaque `line_items.description`, retirer le verbe (remplacement/pose/installation/dépose/réparation/changement/fourniture) et ne garder que la désignation : « le remplacement total de la pompe de relevage » → `pompe de relevage`. Le titre complet avec le verbe reste dans `label`/`description` pour le descriptif client ; seul le nom d'article sert au rapprochement catalogue (sinon faux match garanti).
+6. En cas de doute réel (OU ambigu), créer quand même les options détectées et les marquer `Estimé` plutôt que de tout fusionner.
 
 Exemple canonique (une demande, deux devis) : voir `references/exemples.md`.
 

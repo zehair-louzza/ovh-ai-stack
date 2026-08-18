@@ -39,11 +39,14 @@ Les prix, marges, fournisseurs sensibles ou autres attributs non nécessaires ne
 
 Pour chaque ligne :
 
-- conserver le libellé source ;
-- produire un libellé technique court ;
-- séparer action, objet, caractéristiques, dimensions, quantité et unité ;
+- conserver le libellé source (traçabilité) ;
+- **retirer le verbe d'action avant de matcher** : « remplacement (total) de », « pose de », « installation de », « dépose de », « réparation de », « changement de », « fourniture (et pose) de », « mise en place de », etc. — le rapprochement catalogue se fait UNIQUEMENT sur le nom de l'article, jamais sur la phrase d'action complète ;
+  - Exemple : « le remplacement total de la pompe de relevage » → objet à matcher : « pompe de relevage » (pas la phrase entière) ;
+  - Exemple : « pose de spots LED » → objet à matcher : « spots LED » ;
+- produire un libellé technique court (l'objet seul) ;
+- séparer action, objet, caractéristiques, dimensions, quantité et unité — l'action va dans le descriptif des travaux, jamais dans la chaîne de matching ;
 - normaliser accents, pluriels, abréviations et synonymes sans perdre la preuve d'origine ;
-- ne pas transformer un paragraphe entier en article.
+- ne pas transformer un paragraphe entier en article. Une phrase d'action entière ne matche jamais correctement (risque de faux positif sur un article sans rapport, ex. « pompe de relevage » ne doit jamais matcher un « peigne de raccordement » simplement parce que la phrase complète a été comparée).
 
 ### 2. Filtrer les candidats
 
