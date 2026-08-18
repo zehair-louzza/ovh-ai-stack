@@ -36,6 +36,9 @@ Ne pas l'utiliser pour chiffrer, choisir un article catalogue, calculer la TVA o
 - Pour un scan ou une photo, utiliser la vision ou l'OCR local ; ne pas conclure à partir d'une zone illisible.
 - Repérer les tableaux, en-têtes, pieds de page et blocs de coordonnées séparément.
 - Conserver le nom du fichier et son empreinte si le système les fournit.
+- **Modèle par défaut pour tout fichier importé** (PDF, DOCX, XLSX, CSV, TXT, image — tableaux inclus) : Gemma (`gemma4:26b`), avec le **mode raisonnement toujours actif**. Décision du 2026-08-18 : Gemma+raisonnement est plus fiable que `qwen2.5:14b` (rapide mais sans raisonnement) pour démêler une structure tabulaire, des colonnes ambiguës ou une mise en page dense. `qwen2.5:14b` (sans raisonnement) reste réservé au texte **collé manuellement** dans l'interface, jamais à un fichier importé.
+- Une image (photo, page de PDF rendue en image §1.1) **exige** de toute façon un modèle multimodal : `qwen2.5:14b` et `hermes3`/`hermes-3` sont **texte seul** et renvoient une erreur « modele ne supporte pas le multimodal » s'ils reçoivent une image (incident du 2026-08-18) — ne jamais leur envoyer d'image, ne jamais s'y replier en cas d'échec sur un fichier avec image.
+- **Contrainte materielle** : le VPS d'inference n'a pas de GPU (8 vCPU, 22 Go RAM). Le mode raisonnement de Gemma peut generer plusieurs milliers de tokens de reflexion avant la reponse finale — mesure en conditions reelles : jusqu'a ~11 minutes pour une extraction de tableau (2026-08-18). Toujours demander une reflexion **breve** (quelques phrases, pas d'enumeration exhaustive etape par etape) plutot que de desactiver le raisonnement : cela garde le gain de fiabilite sur les tableaux tout en limitant le volume de texte de reflexion genere.
 
 ### 1.1 Détecter un calque texte illisible ou une source tabulaire
 
