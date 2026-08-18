@@ -51,6 +51,15 @@ Ordre de priorité en cas de contradiction :
 
 Si une contradiction impacte le prix, les quantités, le planning, la TVA ou le périmètre : **demander confirmation** avant de produire un PDF client final.
 
+## Extraction pour matching : l'article, pas la phrase
+
+Avant de chercher un article dans le catalogue, retirer le verbe d'action de la ligne : « remplacement (total) de », « pose de », « installation de », « dépose de », « réparation de », « changement de », « fourniture (et pose) de », « mise en place de ». Ne matcher que sur le nom de l'article restant.
+
+- « le remplacement total de la pompe de relevage » → matcher sur **« pompe de relevage »**.
+- « pose de spots LED » → matcher sur **« spots LED »**.
+
+Une phrase d'action entière ne doit jamais être comparée au catalogue : elle produit de faux rapprochements (ex. « pompe de relevage » ne doit jamais matcher un article sans rapport comme un « peigne de raccordement » simplement parce que la phrase complète a été comparée). Le verbe d'action reste dans le descriptif des travaux, jamais dans la recherche catalogue.
+
 ## Catalogue : lecture seule stricte
 
 Le catalogue de prix transmis par l'utilisateur est la **seule source autorisée** pour les prix des fournitures et matériaux.
@@ -109,6 +118,8 @@ Une demande de devis peut arriver par différents canaux : texte libre, e-mail, 
 3. Si une zone d'un document (photo, scan) est illisible, la signaler `À confirmer` plutôt que de deviner son contenu.
 4. Ne jamais fusionner silencieusement deux demandes distinctes portant sur le même client/site sans le signaler.
 5. Toujours relire les notes de chantier les plus récentes (OneNote ou équivalent) avant de produire une nouvelle version : elles priment sur les versions antérieures du devis en cas de contradiction.
+6. **Options exclusives** (skill `devis-options-master`) : « soit A soit B », « ou les pièces suivantes », « option 1 / 2 » = **un devis distinct par alternative**. ET / puis = un seul devis. Chaque devis a son descriptif (périmètre, phases, logique déplacement et heures-homme).
+
 
 ## Description des travaux
 
