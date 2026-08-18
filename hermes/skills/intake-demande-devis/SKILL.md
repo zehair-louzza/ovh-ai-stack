@@ -1,6 +1,6 @@
 ---
 name: intake-demande-devis
-description: "Utiliser pour lire et structurer une demande de devis reçue par PDF, scan, photo, e-mail, formulaire ou texte. Extrait séparément le donneur d'ordre, le client ou l'enseigne et le site d'intervention, conserve les preuves, qualifie les incertitudes et produit un JSON sans prix avant l'activation de devis-options-master."
+description: "Utiliser pour lire et structurer une demande de devis reçue par n'importe quel canal (import manuel, WhatsApp, formulaire du site client, e-mail, API) et n'importe quel format (PDF texte ou scanné, DOCX, XLSX/CSV, TXT, photo). Détecte un calque texte PDF illisible et bascule sur une lecture visuelle sans jamais stocker le fichier. Extrait séparément le donneur d'ordre, le client ou l'enseigne et le site d'intervention, conserve les preuves, qualifie les incertitudes et produit un JSON sans prix avant l'activation de devis-options-master."
 compatibility: "Hermes Agent local et flux Blueseatra. Nécessite un texte extrait ou un outil de lecture PDF/image. Ne calcule aucun prix."
 metadata:
   author: "Blueseatra"
@@ -23,6 +23,9 @@ Ne pas l'utiliser pour chiffrer, choisir un article catalogue, calculer la TVA o
 4. Ne jamais produire de montant, prix unitaire, total HT, TVA en euros ou TTC. Un budget présent dans la source peut être conservé textuellement dans `source_budget_mention`, sans calcul ni interprétation.
 5. Ne jamais inventer une adresse, une date, un contact, une quantité, une unité, un diagnostic ou une option.
 6. Toute valeur extraite porte une preuve et un niveau de confiance : `confirme`, `estime` ou `a_confirmer`.
+7. La demande peut arriver par **n'importe quel canal** : import manuel, message WhatsApp, formulaire du site client, e-mail, API. Traiter tous les canaux de façon identique une fois le texte ou l'image obtenus — ne jamais supposer une structure propre à un canal donné.
+8. La demande peut arriver sous **n'importe quel format de fichier** : PDF (texte natif ou scanné/rendu en image), DOCX, XLSX/CSV, TXT, photo. Voir §1.1 pour la détection de lisibilité et la bascule vers une lecture visuelle.
+9. Le fichier original (PDF, image, tout format) n'est **jamais conservé** au-delà du traitement d'extraction : seule la donnée structurée qui en résulte (JSON de sortie) est conservée. Ne jamais recommander ni supposer un stockage du fichier source dans le SaaS.
 
 ## Procédure
 
@@ -33,6 +36,20 @@ Ne pas l'utiliser pour chiffrer, choisir un article catalogue, calculer la TVA o
 - Pour un scan ou une photo, utiliser la vision ou l'OCR local ; ne pas conclure à partir d'une zone illisible.
 - Repérer les tableaux, en-têtes, pieds de page et blocs de coordonnées séparément.
 - Conserver le nom du fichier et son empreinte si le système les fournit.
+
+### 1.1 Détecter un calque texte illisible ou une source tabulaire
+
+Certains PDF ont un calque texte techniquement présent mais illisible (police en sous-ensemble sans table de correspondance Unicode, export d'un tableau vectoriel, impression PDF depuis un logiciel métier) : l'extraction brute renvoie alors des caractères de contrôle ou un charabia, même si le rendu visuel de la page est parfaitement net.
+
+Signes qu'un texte est illisible (« garbled ») plutôt que simplement vide :
+
+- proportion élevée de caractères de contrôle (hors saut de ligne/tabulation) ;
+- très peu de lettres reconnaissables par rapport à la longueur totale ;
+- quasiment aucun mot de 3 lettres ou plus dans l'alphabet attendu.
+
+Dans ce cas — ou si le texte est simplement vide (scan, photo) — basculer sur une **lecture visuelle** : rendre la ou les pages en image(s) et extraire par vision plutôt que de traiter le charabia comme du texte valide. Ne jamais transmettre un texte illisible à l'étape d'extraction structurée : le signaler et basculer, pas de tentative de « nettoyage » heuristique du charabia lui-même.
+
+Si la source est un tableau (page rendue en image, feuille de calcul XLSX/CSV, tableau DOCX/Markdown) : lire ligne par ligne. Chaque ligne de données devient un item de `requested_items` : la désignation vient uniquement de la colonne article/désignation (jamais de la phrase d'action complète, voir la règle article-only de `preparation-technique-tce`), la quantité et l'unité viennent de leurs colonnes si présentes. **Ignorer toute colonne qui ressemble à un prix** (« PU », « P.U. HT », « Total », « Montant », « € ») — ces valeurs ne sont jamais lues ni reportées, conformément à la règle « pricing_prohibited ».
 
 ### 2. Rechercher les trois parties
 
