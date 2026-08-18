@@ -59,7 +59,12 @@ services:
     # Pas de ports: publics. Accessible uniquement via le réseau Docker + Caddy.
     environment:
       OLLAMA_HOST: 0.0.0.0:11434
-      OLLAMA_KEEP_ALIVE: 10m
+      # 30m au lieu de 10m : Gemma (17 Go, CPU seul) est desormais le modele
+      # d'extraction par defaut pour tout fichier importe. OLLAMA_MAX_LOADED_MODELS=1
+      # force un rechargement complet (~20s) a chaque alternance avec un autre
+      # modele ; un keep_alive plus long evite ce rechargement pendant une
+      # session de traitement de plusieurs devis rapprochees.
+      OLLAMA_KEEP_ALIVE: 30m
       OLLAMA_MAX_LOADED_MODELS: 1
       OLLAMA_NUM_PARALLEL: 1
       OLLAMA_CONTEXT_LENGTH: 8192
