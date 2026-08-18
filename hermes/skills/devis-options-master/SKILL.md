@@ -59,8 +59,8 @@ Structure fixe :
 1. **Intitulé** : `Option i/n — {label}` si plusieurs options, sinon le titre seul.
 2. **Périmètre** : ce qui est fourni et posé. Site d'intervention.
 3. **Déroulement** : phases numérotées (arrivée, sécurisation, dépose, pose, essais, nettoyage, repli).
-4. **Déplacement** : nombre de jours = jours de présence. Expliquer : 1 jour de chantier = 1 forfait déplacement (défaut 40 € HT/j, heures 8h-18h). Pas un forfait magique.
-5. **Main-d'œuvre** : heures-homme = personnes × heures/jour × jours, plafond 7 h/personne/jour. Expliquer le total (défaut 42 € HT/h). Marquer Estimé si non mesuré.
+4. **Déplacement** : nombre de jours = jours de présence. Expliquer : 1 jour de chantier = 1 forfait déplacement, heures 8h-18h. Pas un forfait magique. **Ne jamais citer le tarif catalogue en euros dans ce texte** (ex. « tarif catalogue / 40 € HT par jour ») : le montant apparaît uniquement dans le tableau chiffré, jamais répété en prose (sinon décalage garanti si le catalogue change).
+5. **Main-d'œuvre** : heures-homme = personnes × heures/jour × jours, plafond 7 h/personne/jour. Justifier l'effectif (voir §3). Marquer Estimé si non mesuré. Même règle : jamais de tarif en euros dans le texte.
 6. **Hors périmètre** : l'autre option, et tout ce qui n'est pas demandé.
 
 Interdit : inventer un diagnostic, une cause de panne, ou des travaux non demandés.
@@ -72,6 +72,7 @@ Calcul (FastAPI / matching, jamais l'IA pour le €) :
 - `Heures-homme = personnes × heures/j × jours` (max 7 h/j/personne).
 - `Jours déplacement = jours réels d'intervention` (sauf consigne contraire).
 - Barèmes de vraisemblance (heures seulement) : spot 0,45 h, ballon ECS 4,5 h, pompe / relevage complet ~4,5 h, pièces pompe ~2,5 h + 1,25 h install/repli, minimum visite 2 h.
+- **Effectif par défaut : 2 personnes.** Un déplacement se fait normalement à deux (sécurité, rapidité). **1 seule personne uniquement pour un petit travail léger** (≤ 3 heures-homme, pièce simple, pas de manutention lourde). Exemple : remplacement complet d'une pompe (~4,5 h) → 2 personnes ; remplacement de 3 petites pièces sur une pompe existante (~2,5-3 h) → 1 personne peut suffire. Estimer explicitement selon la nature du travail, ne jamais partir de 1 par défaut.
 
 L'IA propose `labor_hours`, `travel_days`, `crew_size`. Elle n'écrit aucun €.
 

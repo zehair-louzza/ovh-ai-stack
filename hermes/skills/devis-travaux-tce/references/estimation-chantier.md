@@ -16,7 +16,7 @@ Les **prix** viennent uniquement du catalogue (ou des tarifs ANELEC : 42 €/h, 
 > `Jours = max(1 ; plafond(Heures-homme / (7 × effectif)))`  
 > `Jours de déplacement = Jours` (sauf consigne contraire)
 
-Effectif par défaut : **1** si &lt; 6 h-h ; **2** à partir de 6 h-h (chantier boutique / pose à deux).
+**Effectif par défaut : 2 techniciens.** Un déplacement se fait normalement à deux (sécurité, rapidité, chantier boutique). **1 seul technicien uniquement pour un petit travail léger** : durée courte, ≤ 3 h-h estimées (ex. remplacement d'une pièce simple, une vanne, un flexible). Au-delà de 3 h-h, ou si le travail implique manutention, dépose lourde ou plusieurs tâches, repasser à 2. Ne jamais partir de 1 par défaut : estimer explicitement si le travail nécessite une ou deux personnes avant de trancher.
 
 Toujours ajouter, s'ils ne sont pas déjà dans une tâche :
 

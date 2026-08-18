@@ -93,6 +93,14 @@ Si le calcul est ambigu, poser une seule question :
 - Si le volume dépasse la limite, répartir sur plusieurs jours ; si le nombre de jours fourni est insuffisant, demander confirmation ou proposer une répartition réaliste.
 - Capacité maximale : 1 personne = 7 h-h/jour ; 2 personnes = 14 h-h/jour ; 3 personnes = 21 h-h/jour.
 
+### Effectif par défaut : 2 personnes
+
+**Un déplacement se fait normalement à deux techniciens** (sécurité, rapidité, entraide chantier boutique). **Un seul technicien uniquement pour un petit travail léger** : durée courte (≤ 3 heures-homme estimées), pièce simple, pas de manutention lourde ni de dépose complexe.
+
+- Remplacement d'une pièce simple (vanne, flexible, clapet) : 1 personne suffit généralement.
+- Remplacement d'un équipement complet (pompe, ballon ECS, chauffe-eau) : prévoir 2 personnes.
+- Ne jamais partir de 1 par défaut : estimer explicitement, à partir de la nature et de la durée du travail, s'il faut une ou deux personnes, avant de chiffrer les heures-homme.
+
 ### Temps à ne pas oublier
 
 Intégrer dans les heures-homme (ou en ligne dédiée si l'utilisateur le souhaite) : installation et repli de chantier, protections, temps de séchage impliquant un second passage, nettoyage de fin de chantier, évacuation des déchets.
