@@ -64,15 +64,17 @@ services:
       # force un rechargement complet (~20s) a chaque alternance avec un autre
       # modele ; un keep_alive plus long evite ce rechargement pendant une
       # session de traitement de plusieurs devis rapprochees.
-      # 2026-08-19 : retour au defaut Ollama (5m) -- le keep_alive long
-      # (30m, decision du 2026-08-18) maintenait un modele charge en RAM
-      # meme totalement inactif, sur un VPS a 22 Go sans marge (598 Mo
-      # libres observes avec un seul modele charge). OLLAMA_MAX_LOADED_MODELS=1
-      # empeche deja de garder 2 modeles en memoire simultanement : le
-      # keep_alive ne beneficie qu'aux rappels rapides du MEME modele, pas
-      # a l'alternance entre modeles differents (qui force un rechargement
-      # de toute facon, keep_alive ou pas).
-      OLLAMA_KEEP_ALIVE: 5m
+      # 2026-08-19 : dechargement immediat (0) -- le keep_alive de 30m puis
+      # 5m maintenait encore un modele charge en RAM meme totalement inactif,
+      # sur un VPS a 22 Go sans marge (598 Mo libres observes avec un seul
+      # modele charge). OLLAMA_MAX_LOADED_MODELS=1 garantit DEJA qu'un
+      # modele different force le dechargement du precedent avant de
+      # charger le nouveau, quelle que soit la valeur de keep_alive : ce
+      # reglage ne concerne que l'inactivite totale (aucune requete du
+      # tout). Decision explicite du 2026-08-19 : dechargement systematique
+      # des qu'un modele termine sa reponse, jamais de retention en cas
+      # d'inactivite.
+      OLLAMA_KEEP_ALIVE: 0
       OLLAMA_MAX_LOADED_MODELS: 1
       OLLAMA_NUM_PARALLEL: 1
       OLLAMA_CONTEXT_LENGTH: 8192
