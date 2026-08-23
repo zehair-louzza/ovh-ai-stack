@@ -106,6 +106,23 @@ Avant tout appel :
 }
 ```
 
+## Outils Hermes désactivés (allègement du prompt)
+
+Le prompt fixe de l'agent (`hermes prompt-size`) incluait 46,2 Ko de schémas d'outils sur 18 outils, avant tout message utilisateur. Dans `hermes/config.yaml`, `agent.disabled_toolsets` retire ceux qu'aucune skill devis ne documente comme utilisés, chacun avec un équivalent déjà couvert ailleurs — ce n'est pas une simple optimisation de vitesse, cela **renforce** les règles ci-dessus :
+
+| Outil désactivé | Pourquoi c'est sans perte | Où l'équivalent vit déjà |
+|---|---|---|
+| `memory`, `session_search` | La continuité client/devis ne doit jamais dépendre de la mémoire interne d'Hermes ni d'une recherche approximative dans d'anciennes conversations | Supabase/FastAPI, via la référence `DEV-AAAAMMJJ-CLIENT-SITE-Vxx` |
+| `code_execution` | L'IA n'a jamais le droit de calculer un prix elle-même | FastAPI + catalogue seuls chiffrent (règle absolue ci-dessus) |
+| `delegation` (`delegate_task`) | Sous-agent parallèle inutile : `OLLAMA_MAX_LOADED_MODELS=1` sur le VPS empêche toute exécution simultanée réelle | Traitement séquentiel direct par l'agent principal |
+| `tts`, `todo` | Aucune sortie vocale requise ; chaque skill est déjà son propre plan étape par étape | Le texte de chaque `SKILL.md` (phases numérotées) |
+
+Outils conservés et pourquoi : `file` (livrables XLSX/PDF), `skills` (`skill_view`, chargement forcé par `SOUL.md`), `clarify` (question ciblée sur article ambigu, voir `rapprochement-catalogue-sans-prix`), `browser` + `terminal` (DTU/normes/phasage autorisés, jamais un prix), `vision` (lecture de scans/photos, route vers le modèle vision auxiliaire — voir `intake-demande-devis`).
+
+**Piège vérifié (23/08) : `terminal` NE DOIT PAS être désactivé**, même si aucune skill n'exécute de commande shell directement. Le toolset `browser` en dépend silencieusement (le navigateur headless a besoin d'un backend processus) : désactiver `terminal` a fait disparaître `browser` du schéma envoyé au modèle, alors que `hermes tools list` continuait à l'afficher ✓ enabled — une désactivation ne peut donc pas se vérifier seulement par cette commande, il faut confirmer avec `hermes prompt-size` (colonne "Toolsets by size") après chaque changement.
+
+Si une future skill devis a réellement besoin d'un outil de cette liste, le retirer de `disabled_toolsets`, redéployer, puis reconfirmer via `hermes prompt-size` qu'aucun autre toolset n'a disparu par effet de bord — et documenter ici le nouveau besoin.
+
 ## Incidents
 
 En cas de fuite possible, accès inter-tenant, secret exposé ou export erroné : bloquer l'action, préserver les journaux, ne pas répéter la donnée sensible dans la réponse, signaler l'incident selon la procédure interne et exiger une revue humaine avant reprise.
