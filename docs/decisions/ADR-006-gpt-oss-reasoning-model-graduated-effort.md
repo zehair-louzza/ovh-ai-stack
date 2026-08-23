@@ -38,7 +38,9 @@ Test réel via `/api/chat` :
 4. **`_call_reason`/`_call_hermes_ollama`** (Blueseatra) acceptent un paramètre optionnel `reasoning_effort` par appel, pour un futur appelant qui voudrait un niveau différent du défaut global sans changer la variable d'environnement.
 5. Le hint de prompt `_THINK_BREVITY_HINT` (« réfléchis brièvement »), conçu pour compenser l'absence de contrôle natif sur les modèles booléen-only, est **omis pour `gpt-oss`** : il contrôle déjà sa profondeur nativement via `think`, et ce hint serait contradictoire avec un niveau `"high"` explicitement demandé.
 
-Correctifs appliqués sur `Blueseatra` : PR [#48](https://github.com/zehair-louzza/Blueseatra/pull/48) (détection `_wants_think`), PR [#49](https://github.com/zehair-louzza/Blueseatra/pull/49) (niveau gradué), PR [#50](https://github.com/zehair-louzza/Blueseatra/pull/50) (documentation).
+Correctifs appliqués sur `Blueseatra` : PR [#48](https://github.com/zehair-louzza/Blueseatra/pull/48) (détection `_wants_think`), PR [#49](https://github.com/zehair-louzza/Blueseatra/pull/49) (niveau gradué), PR [#50](https://github.com/zehair-louzza/Blueseatra/pull/50) (documentation texte), PR [#51](https://github.com/zehair-louzza/Blueseatra/pull/51) (rapport jury), PR [#52](https://github.com/zehair-louzza/Blueseatra/pull/52) (schémas PNG et PDF régénérés -- PR #50 avait corrigé le texte des générateurs mais pas trois diagrammes avec du texte IA brulé dans l'image elle-même, invisible à un grep texte).
+
+**Statut de fusion (23/08)** : #48, #49, #50, #51 fusionnées sur `main` de Blueseatra ; Render a redeployé automatiquement à chaque fusion (`autoDeploy: yes`, déclencheur commit) et le health check (`/api/health`) a confirmé chaque commit en production. `HERMES_REASONING_MODEL=gpt-oss:20b` et `HERMES_REASONING_EFFORT=medium` sont configurés sur Render (service `blueseatra-api`). #52 (régénération schémas/PDF) reste à confirmer.
 
 ## Alternatives considérées
 
