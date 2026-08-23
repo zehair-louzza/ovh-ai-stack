@@ -137,7 +137,7 @@ services:
     environment:
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://ollama:11434/v1}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-ollama-local}
-      HERMES_MODEL: ${HERMES_MODEL:-gemma4:26b}
+      HERMES_MODEL: ${HERMES_MODEL:-qwen2.5vl:7b}
       HERMES_DASHBOARD: "0"
       # API OpenAI-compatible. 0.0.0.0 = joignable par Caddy (réseau Docker).
       # Ne pas publier 8642 sur l'hôte : seul Caddy expose hermes.blueseatra.com.
