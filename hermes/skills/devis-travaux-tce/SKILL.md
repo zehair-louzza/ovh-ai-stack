@@ -123,7 +123,7 @@ Une demande de devis peut arriver par différents canaux : texte libre, e-mail, 
 
 ## Description des travaux
 
-Chaque devis commence par une **description claire des travaux**, basée uniquement sur la demande, les constats, relevés, documents et photos, et les contraintes réelles (séchage, accès, phasage, horaires de site, co-activité).
+Chaque devis commence par une **description claire des travaux**, basée uniquement sur la demande, les constats, relevés, documents et photos, et les contraintes réelles (séchage, accès, phasage, horaires de site, co-activité). La mise en forme du bloc client (style clair et concis, structure fixe, liste canonique des étapes de chantier) suit `redaction-descriptif-chantier` — ce skill-ci fournit les faits constatés, il ne rédige pas le texte final lui-même.
 
 Interdit :
 

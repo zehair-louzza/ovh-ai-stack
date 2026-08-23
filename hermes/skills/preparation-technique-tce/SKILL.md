@@ -82,16 +82,16 @@ Ne jamais utiliser comme unique ligne la reformulation du titre de la demande. L
 
 ### 6. Rédiger le descriptif client
 
-Rédiger en français professionnel :
+Déléguer la rédaction à `redaction-descriptif-chantier` (style clair et concis, structure fixe, liste canonique des phases) en lui transmettant :
 
 1. intitulé du scénario ;
 2. périmètre et site ;
-3. déroulement chronologique ;
+3. déroulement chronologique (phases techniques réellement décomposées en §3) ;
 4. essais et remise en service ;
 5. hypothèses et exclusions visibles ;
 6. contraintes client nécessaires à l'intervention.
 
-Le descriptif doit être cohérent ligne par ligne avec la préparation technique.
+Le descriptif produit doit rester cohérent ligne par ligne avec la préparation technique de ce skill.
 
 ## Sortie attendue
 
