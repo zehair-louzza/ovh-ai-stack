@@ -52,7 +52,7 @@ Exemple canonique (une demande, deux devis) : voir `references/exemples.md`.
 
 ## 2. Descriptif de travaux (obligatoire)
 
-Chaque devis a un bloc client, rédigé en français professionnel, qui explique **la logique du travail**, pas seulement le titre.
+Chaque devis a un bloc client qui explique **la logique du travail**, pas seulement le titre. La rédaction proprement dite (style clair et concis, liste canonique des phases de déroulement) est déléguée à `redaction-descriptif-chantier` — ce skill fournit uniquement les données ci-dessous en entrée, il ne rédige pas le texte final lui-même.
 
 Structure fixe :
 
