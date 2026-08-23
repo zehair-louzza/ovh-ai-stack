@@ -77,52 +77,33 @@ model:
 
 # gpt-oss:20b PENSE nativement et Ollama n'accepte que "low"/"medium"/"high"
 # pour ce modèle ("none"/false est ignoré -- docs.ollama.com/capabilities/thinking).
-# "medium" par défaut pour la conversation devis principale (équilibre
-# qualité/latence) ; chaque slot auxiliaire ci-dessous choisit son propre
-# niveau selon la nature de sa tâche (voir commentaires par slot).
+# "high" pour la conversation devis principale (raisonnement maximal,
+# demande explicite le 23/08 -- voir ADR-007) ; chaque slot auxiliaire
+# ci-dessous choisit son propre niveau selon la nature de sa tache (voir
+# commentaires par slot) et n'est PAS affecte par ce changement.
 agent:
-  reasoning_effort: medium
-  # Réduction du prompt fixe (23/08) : sur 18 outils / 46,2 Ko de schémas
-  # (mesuré par `hermes prompt-size`), 7 sont désactivés ici parce qu'aucune
-  # des 10 skills devis (devis-travaux-tce, devis-options-master,
-  # intake-demande-devis, preparation-technique-tce,
-  # rapprochement-catalogue-sans-prix, conformite-devis-fr,
-  # controle-qualite-devis, livrables-devis-separes, securite-donnees-devis,
-  # suivi-relance-devis) ne les documente comme utilisés, et leur
-  # équivalent fonctionnel existe déjà ailleurs (voir securite-donnees-devis
-  # §"Outils désactivés") :
-  #   - memory, session_search : la continuité client/devis vient de
-  #     Supabase/FastAPI (référence DEV-AAAAMMJJ-...), jamais de la mémoire
-  #     Hermes ni d'une recherche de session — plus fiable, structuré.
-  #   - code_execution : tout calcul de prix est interdit à l'agent (seul
-  #     FastAPI + catalogue chiffrent, cf. devis-options-master "Ne jamais
-  #     inventer de prix") — désactiver ce tool renforce cette règle au lieu
-  #     de l'affaiblir.
-  #   - delegation (delegate_task) : OLLAMA_MAX_LOADED_MODELS=1 sur ce VPS
-  #     interdit toute exécution parallèle réelle d'un sous-agent — spawn
-  #     purement séquentiel, donc coût de schéma sans aucun gain de temps.
-  #   - tts, todo : aucune sortie vocale n'est jamais requise pour un devis ;
-  #     chaque skill est déjà son propre plan étape par étape, un todo tool
-  #     runtime n'ajoute aucune capacité.
-  # NE PAS désactiver "terminal" : vérifié empiriquement (23/08) que le
-  # toolset "browser" en dépend silencieusement (Chromium headless a besoin
-  # d'un backend processus) — le désactiver a fait disparaître "browser" du
-  # schéma malgré `hermes tools list` l'affichant encore ✓ enabled, cassant
-  # l'accès DTU/normes documenté dans SOUL.md et preparation-technique-tce.
-  # Conservés : file (livrables XLSX/PDF), skills (skill_view, forcé par
-  # SOUL.md), clarify ("question ciblée" documentée dans
-  # rapprochement-catalogue-sans-prix), browser + terminal (DTU/normes
-  # autorisées, jamais les prix — SOUL.md + preparation-technique-tce),
-  # vision (lecture de scans/photos — intake-demande-devis, route vers
-  # auxiliary.vision).
+  # 2026-08-23 (revu) : "high" au lieu de "medium" -- demande explicite de
+  # l'utilisateur, raisonnement maximal privilegie sur la vitesse. Mesure
+  # le meme jour (prompt trivial, VPS CPU-only) : "high" ~12.3s contre
+  # ~8.9s en "medium" ; l'ecart reel sur un devis complet sera plus grand.
+  # Voir ADR-007.
+  reasoning_effort: high
+  # 2026-08-23 (revu) : tous les toolsets reactives (memory, session_search,
+  # code_execution, delegation, tts, todo) -- demande explicite de
+  # l'utilisateur (voir ADR-007), malgre l'avertissement donne et accepte sur
+  # code_execution specifiquement : ce toolset donne a l'agent une capacite
+  # de calcul propre, ce qui va a l'encontre de la regle "FastAPI seul moteur
+  # de prix, l'IA n'invente jamais de prix" documentee dans
+  # devis-options-master et securite-donnees-devis. Cette regle reste en
+  # vigueur au niveau skill/instruction (SOUL.md, devis-options-master) :
+  # reactiver le toolset ne change pas la consigne donnee au modele de ne
+  # jamais calculer de prix lui-meme, seulement sa capacite technique de le
+  # faire s'il l'ignorait -- risque accepte explicitement par l'utilisateur.
+  # Pas de cle disabled_toolsets : tous les toolsets Hermes sont actifs
+  # (memory, session_search, code_execution, delegation, tts, todo, file,
+  # skills, clarify, browser, terminal, vision).
   # https://hermes-agent.nousresearch.com/docs/user-guide/configuration#global-toolset-disable
-  disabled_toolsets:
-    - memory
-    - session_search
-    - code_execution
-    - delegation
-    - tts
-    - todo
+
 
 # hermes3 satisfait tools + contexte 64K (131072) : repli fonctionnel si
 # gpt-oss:20b échoue (OOM, timeout) — nettement plus lent (dense 8B, pas de
