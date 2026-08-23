@@ -11,10 +11,34 @@
 #                                « what the agent thinks with »
 #   extraction / tâches légères →  delegation + auxiliary.web_extract (+ slots rapides)
 #   génération SaaS           →  FastAPI → Ollama (ia.blueseatra.com), pas ce fichier
-# Vision = même modèle que le principal : Gemma 4 26B A4B est multimodal.
-# DeepSeek-R1 32B : non installé — ne pas le pointer.
-# OLLAMA_MAX_LOADED_MODELS=1 : un seul modèle en RAM. provider: auto interdit
-# (la découverte auxiliaire tenterait OpenRouter / Nous Portal).
+#
+# 2026-08-23 : repointage vers les modèles réellement présents sur le VPS
+# (vérifié via `ollama list` — gemma4:26b / qwen3.6:27b / qwen2.5:14b n'ont
+# JAMAIS été installés, seule une tentative d'installation de Gemma 4 26B-A4B
+# avait été entamée sans jamais aboutir ; ce fichier pointait donc dans le
+# vide depuis le début — seul le tout dernier maillon de secours, hermes3,
+# répondait réellement). Modèles disponibles ce jour :
+#   glm-ocr, qwen2.5vl:7b, qwen2.5:7b, LightOnOCR-2:1b, olmocr2:7b,
+#   PaddleOCR-VL-1.6, hermes3/hermes-3.
+# Repris qwen2.5vl:7b / qwen2.5:7b / hermes3 : mêmes modèles déjà en
+# production côté FastAPI (PR #44, ai_service.py) — cohérence entre les deux
+# services plutôt que d'introduire une troisième famille de modèles.
+# Vision = même modèle que le principal (qwen2.5vl:7b est nativement
+# multimodal) : évite un rechargement Ollama à chaque appel vision alors
+# qu'OLLAMA_MAX_LOADED_MODELS=1 (un seul modèle en RAM à la fois).
+# provider: auto interdit (la découverte auxiliaire tenterait OpenRouter /
+# Nous Portal).
+#
+# Raisonnement (agent.reasoning_effort) : qwen2.5 et qwen2.5-vl ne figurent
+# PAS dans la liste des modèles « thinking » supportés par Ollama (DeepSeek
+# R1, Qwen 3, GPT-OSS, DeepSeek-v3.1— https://docs.ollama.com/capabilities/thinking).
+# Un effort "high"/"medium" serait donc silencieusement sans effet sur ces
+# modèles : réglé explicitement sur "none" partout pour ne pas laisser croire
+# à un contrôle qui n'existe pas. Si un modèle "thinking" (ex. Qwen 3) est
+# installé un jour, revoir ce réglage — et noter le bug connu de Hermes sur
+# provider "custom" (https://github.com/NousResearch/hermes-agent/issues/25758) :
+# reasoning_effort: none n'est fiable que sur les modèles qui ne pensent pas
+# nativement, pas comme mécanisme de désactivation d'un modèle "thinking".
 
 # Forme officielle : model est un mapping (provider, default, base_url, api_mode).
 # https://hermes-agent.nousresearch.com/docs/user-guide/configuring-models
@@ -22,30 +46,20 @@
 # provider: custom obligatoire pour un endpoint OpenAI-compatible local.
 model:
   provider: custom
-  default: gemma4:26b
+  default: qwen2.5vl:7b
   base_url: http://ollama:11434/v1
   api_key: ollama-local
   api_mode: chat_completions
 
-# Raisonnement = effort du modèle principal, pas un slot dédié.
-# Vide = medium. high = contrôle matériaux / lots.
+# qwen2.5vl:7b n'est pas un modèle "thinking" (voir note ci-dessus) : aucun
+# reasoning_overrides nécessaire, "none" partout par défaut.
 agent:
-  reasoning_effort: high
-  reasoning_overrides:
-    "gemma4:26b": high
-    "qwen3.6:27b": high
-    "qwen2.5:14b": none
-    "hermes3": none
-    "hermes-3": none
+  reasoning_effort: none
 
-# Si Gemma échoue (OOM, timeout), bascule locale uniquement.
+# Si le modèle principal échoue (OOM, timeout), bascule locale uniquement.
 fallback_providers:
   - provider: custom
-    model: qwen3.6:27b
-    base_url: http://ollama:11434/v1
-    key_env: OPENAI_API_KEY
-  - provider: custom
-    model: qwen2.5:14b
+    model: qwen2.5:7b
     base_url: http://ollama:11434/v1
     key_env: OPENAI_API_KEY
   - provider: custom
@@ -57,7 +71,7 @@ auxiliary:
   # Slot d'extraction documenté (pas de clé "extraction").
   web_extract:
     provider: main
-    model: qwen2.5:14b
+    model: qwen2.5:7b
     base_url: http://ollama:11434/v1
     api_key: ollama-local
     timeout: 360
@@ -71,10 +85,10 @@ auxiliary:
 
   compression:
     provider: main
-    model: qwen2.5:14b
+    model: qwen2.5:7b
     base_url: http://ollama:11434/v1
     api_key: ollama-local
-    reasoning_effort: low
+    reasoning_effort: none
     max_concurrency: 1
     fallback_chain:
       - provider: custom
@@ -82,20 +96,21 @@ auxiliary:
         base_url: http://ollama:11434/v1
         api_key: ollama-local
 
-  # Gemma 4 26B A4B accepte texte + image — rester sur le principal.
+  # qwen2.5vl:7b accepte texte + image — rester sur le principal pour éviter
+  # un rechargement (un seul modèle chargé en RAM à la fois).
   vision:
     provider: main
-    model: gemma4:26b
+    model: qwen2.5vl:7b
     base_url: http://ollama:11434/v1
     api_key: ollama-local
     timeout: 120
     download_timeout: 30
-    reasoning_effort: low
+    reasoning_effort: none
     max_concurrency: 1
 
   title_generation:
     provider: main
-    model: qwen2.5:14b
+    model: qwen2.5:7b
     base_url: http://ollama:11434/v1
     api_key: ollama-local
     reasoning_effort: none
@@ -104,7 +119,7 @@ auxiliary:
 
   mcp:
     provider: main
-    model: qwen2.5:14b
+    model: qwen2.5:7b
     base_url: http://ollama:11434/v1
     api_key: ollama-local
     reasoning_effort: none
@@ -112,7 +127,7 @@ auxiliary:
 
   skills_hub:
     provider: main
-    model: qwen2.5:14b
+    model: qwen2.5:7b
     base_url: http://ollama:11434/v1
     api_key: ollama-local
     reasoning_effort: none
@@ -120,7 +135,7 @@ auxiliary:
 
   approval:
     provider: main
-    model: qwen2.5:14b
+    model: qwen2.5:7b
     base_url: http://ollama:11434/v1
     api_key: ollama-local
     reasoning_effort: none
@@ -128,7 +143,7 @@ auxiliary:
 
   triage_specifier:
     provider: main
-    model: qwen2.5:14b
+    model: qwen2.5:7b
     base_url: http://ollama:11434/v1
     api_key: ollama-local
     reasoning_effort: none
@@ -139,7 +154,7 @@ auxiliary:
 delegation:
   base_url: http://ollama:11434/v1
   api_key: ollama-local
-  model: qwen2.5:14b
+  model: qwen2.5:7b
   api_mode: chat_completions
   max_concurrent_children: 1
   worktree_isolation: false
