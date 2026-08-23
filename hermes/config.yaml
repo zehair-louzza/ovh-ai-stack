@@ -12,31 +12,55 @@
 #   extraction / tâches légères →  delegation + auxiliary.web_extract (+ slots rapides)
 #   génération SaaS           →  FastAPI → Ollama (ia.blueseatra.com), pas ce fichier
 #
-# 2026-08-23 : repointage vers les modèles réellement présents sur le VPS
-# (vérifié via `ollama list` — gemma4:26b / qwen3.6:27b / qwen2.5:14b n'ont
-# JAMAIS été installés, seule une tentative d'installation de Gemma 4 26B-A4B
-# avait été entamée sans jamais aboutir ; ce fichier pointait donc dans le
-# vide depuis le début — seul le tout dernier maillon de secours, hermes3,
-# répondait réellement). Modèles disponibles ce jour :
-#   glm-ocr, qwen2.5vl:7b, qwen2.5:7b, LightOnOCR-2:1b, olmocr2:7b,
-#   PaddleOCR-VL-1.6, hermes3/hermes-3.
-# Repris qwen2.5vl:7b / qwen2.5:7b / hermes3 : mêmes modèles déjà en
-# production côté FastAPI (PR #44, ai_service.py) — cohérence entre les deux
-# services plutôt que d'introduire une troisième famille de modèles.
-# Vision = même modèle que le principal (qwen2.5vl:7b est nativement
-# multimodal) : évite un rechargement Ollama à chaque appel vision alors
-# qu'OLLAMA_MAX_LOADED_MODELS=1 (un seul modèle en RAM à la fois).
+# --- Historique du repointage (23/08, 3 itérations, chacune testée en réel) ---
+#
+# 1) Constat initial : gemma4:26b (principal), qwen3.6:27b (1er secours) et
+#    qwen2.5:14b (2e secours + 8 slots auxiliaires) ne sont installés nulle
+#    part (`ollama show <modele>` -> "model not found" sur les trois). Seul
+#    le dernier maillon de secours, hermes3, répondait réellement.
+#
+# 2) 1re correction : repointé le principal + vision sur qwen2.5vl:7b
+#    (multimodal) en pensant profiter d'un seul modèle pour les deux rôles.
+#    ERREUR — détectée par un test réel /v1/chat/completions juste après
+#    déploiement : Hermes envoie systématiquement un paramètre "tools" à
+#    chaque appel (skills, MCP...) ; qwen2.5vl:7b n'a pas cette capacité et
+#    rejette la requête en HTTP 400 ("does not support tools").
+#
+# 3) 2e correction : repointé le principal sur qwen2.5:7b (qui a bien
+#    "tools"). ERREUR encore — nouveau test réel : Hermes exige un contexte
+#    minimum de 64 000 tokens pour le modèle principal, or qwen2.5:7b n'en
+#    déclare que 32 768 (rejeté avec HTTP 500 "context window ... below the
+#    minimum 64,000 required by Hermes Agent").
+#
+# Capacités et contexte réels de chaque modèle installé (`ollama show`) :
+#   qwen2.5:7b    -> tools,  contexte 32 768   (insuffisant pour Hermes)
+#   qwen2.5vl:7b  -> vision, contexte 128 000  (pas de "tools")
+#   hermes3       -> tools,  contexte 131 072  (seul modèle qui satisfait
+#                                               tools ET >= 64K)
+#
+# État final : hermes3 partout où un appel agentique/texte est nécessaire
+# (principal, tous les slots auxiliaires texte, delegation) ; qwen2.5vl:7b
+# réservé au seul slot vision, faute d'alternative avec "tools". Aucun
+# modèle installé ne cumule tools + vision + contexte suffisant — un appel
+# vision recharge donc Ollama (OLLAMA_MAX_LOADED_MODELS=1), c'est inévitable
+# avec le matériel actuel.
+#
+# glm-ocr, LightOnOCR-2:1b, olmocr2:7b, PaddleOCR-VL-1.6 : modèles de
+# transcription pure (pas d'instruction-following), utilisés uniquement en
+# secours du slot vision (voir auxiliary.vision) ou dans la cascade OCR
+# FastAPI (ai_service.py, PR #45) — jamais pour un slot texte/agentique.
+#
 # provider: auto interdit (la découverte auxiliaire tenterait OpenRouter /
 # Nous Portal).
 #
-# Raisonnement (agent.reasoning_effort) : qwen2.5 et qwen2.5-vl ne figurent
-# PAS dans la liste des modèles « thinking » supportés par Ollama (DeepSeek
-# R1, Qwen 3, GPT-OSS, DeepSeek-v3.1— https://docs.ollama.com/capabilities/thinking).
-# Un effort "high"/"medium" serait donc silencieusement sans effet sur ces
-# modèles : réglé explicitement sur "none" partout pour ne pas laisser croire
-# à un contrôle qui n'existe pas. Si un modèle "thinking" (ex. Qwen 3) est
-# installé un jour, revoir ce réglage — et noter le bug connu de Hermes sur
-# provider "custom" (https://github.com/NousResearch/hermes-agent/issues/25758) :
+# Raisonnement (agent.reasoning_effort) : aucun modèle installé ne figure
+# dans la liste des modèles « thinking » supportés par Ollama (DeepSeek R1,
+# Qwen 3, GPT-OSS, DeepSeek-v3.1 — https://docs.ollama.com/capabilities/thinking).
+# Un effort "high"/"medium" serait donc silencieusement sans effet : réglé
+# explicitement sur "none" partout pour ne pas laisser croire à un contrôle
+# qui n'existe pas. Si un modèle "thinking" est installé un jour, revoir ce
+# réglage — et noter le bug connu de Hermes sur provider "custom"
+# (https://github.com/NousResearch/hermes-agent/issues/25758) :
 # reasoning_effort: none n'est fiable que sur les modèles qui ne pensent pas
 # nativement, pas comme mécanisme de désactivation d'un modèle "thinking".
 
@@ -46,66 +70,104 @@
 # provider: custom obligatoire pour un endpoint OpenAI-compatible local.
 model:
   provider: custom
-  default: qwen2.5vl:7b
+  default: gpt-oss:20b
   base_url: http://ollama:11434/v1
   api_key: ollama-local
   api_mode: chat_completions
 
-# qwen2.5vl:7b n'est pas un modèle "thinking" (voir note ci-dessus) : aucun
-# reasoning_overrides nécessaire, "none" partout par défaut.
+# gpt-oss:20b PENSE nativement et Ollama n'accepte que "low"/"medium"/"high"
+# pour ce modèle ("none"/false est ignoré -- docs.ollama.com/capabilities/thinking).
+# "medium" par défaut pour la conversation devis principale (équilibre
+# qualité/latence) ; chaque slot auxiliaire ci-dessous choisit son propre
+# niveau selon la nature de sa tâche (voir commentaires par slot).
 agent:
-  reasoning_effort: none
+  reasoning_effort: medium
+  # Réduction du prompt fixe (23/08) : sur 18 outils / 46,2 Ko de schémas
+  # (mesuré par `hermes prompt-size`), 7 sont désactivés ici parce qu'aucune
+  # des 10 skills devis (devis-travaux-tce, devis-options-master,
+  # intake-demande-devis, preparation-technique-tce,
+  # rapprochement-catalogue-sans-prix, conformite-devis-fr,
+  # controle-qualite-devis, livrables-devis-separes, securite-donnees-devis,
+  # suivi-relance-devis) ne les documente comme utilisés, et leur
+  # équivalent fonctionnel existe déjà ailleurs (voir securite-donnees-devis
+  # §"Outils désactivés") :
+  #   - memory, session_search : la continuité client/devis vient de
+  #     Supabase/FastAPI (référence DEV-AAAAMMJJ-...), jamais de la mémoire
+  #     Hermes ni d'une recherche de session — plus fiable, structuré.
+  #   - code_execution : tout calcul de prix est interdit à l'agent (seul
+  #     FastAPI + catalogue chiffrent, cf. devis-options-master "Ne jamais
+  #     inventer de prix") — désactiver ce tool renforce cette règle au lieu
+  #     de l'affaiblir.
+  #   - delegation (delegate_task) : OLLAMA_MAX_LOADED_MODELS=1 sur ce VPS
+  #     interdit toute exécution parallèle réelle d'un sous-agent — spawn
+  #     purement séquentiel, donc coût de schéma sans aucun gain de temps.
+  #   - tts, todo : aucune sortie vocale n'est jamais requise pour un devis ;
+  #     chaque skill est déjà son propre plan étape par étape, un todo tool
+  #     runtime n'ajoute aucune capacité.
+  # NE PAS désactiver "terminal" : vérifié empiriquement (23/08) que le
+  # toolset "browser" en dépend silencieusement (Chromium headless a besoin
+  # d'un backend processus) — le désactiver a fait disparaître "browser" du
+  # schéma malgré `hermes tools list` l'affichant encore ✓ enabled, cassant
+  # l'accès DTU/normes documenté dans SOUL.md et preparation-technique-tce.
+  # Conservés : file (livrables XLSX/PDF), skills (skill_view, forcé par
+  # SOUL.md), clarify ("question ciblée" documentée dans
+  # rapprochement-catalogue-sans-prix), browser + terminal (DTU/normes
+  # autorisées, jamais les prix — SOUL.md + preparation-technique-tce),
+  # vision (lecture de scans/photos — intake-demande-devis, route vers
+  # auxiliary.vision).
+  # https://hermes-agent.nousresearch.com/docs/user-guide/configuration#global-toolset-disable
+  disabled_toolsets:
+    - memory
+    - session_search
+    - code_execution
+    - delegation
+    - tts
+    - todo
 
-# Si le modèle principal échoue (OOM, timeout), bascule locale uniquement.
+# hermes3 satisfait tools + contexte 64K (131072) : repli fonctionnel si
+# gpt-oss:20b échoue (OOM, timeout) — nettement plus lent (dense 8B, pas de
+# MoE) mais réel, contrairement à qwen2.5:7b (contexte 32K, insuffisant).
 fallback_providers:
-  - provider: custom
-    model: qwen2.5:7b
-    base_url: http://ollama:11434/v1
-    key_env: OPENAI_API_KEY
   - provider: custom
     model: hermes3
     base_url: http://ollama:11434/v1
     key_env: OPENAI_API_KEY
 
 auxiliary:
-  # Slot d'extraction documenté (pas de clé "extraction").
+  # Slot d'extraction documenté (pas de clé "extraction"). "medium" : une
+  # extraction de tableau dense bénéficie de la réflexion (même logique que
+  # la décision Gemma+raisonnement documentée dans le skill
+  # intake-demande-devis pour les fichiers importés).
   web_extract:
     provider: main
-    model: qwen2.5:7b
+    model: gpt-oss:20b
     base_url: http://ollama:11434/v1
     api_key: ollama-local
     timeout: 360
-    reasoning_effort: none
+    reasoning_effort: medium
     max_concurrency: 1
-    fallback_chain:
-      - provider: custom
-        model: hermes3
-        base_url: http://ollama:11434/v1
-        api_key: ollama-local
 
+  # "low" : simple résumé/compaction de conversation, aucune décision
+  # métier -- la vitesse prime.
   compression:
     provider: main
-    model: qwen2.5:7b
+    model: gpt-oss:20b
     base_url: http://ollama:11434/v1
     api_key: ollama-local
-    reasoning_effort: none
+    reasoning_effort: low
     max_concurrency: 1
-    fallback_chain:
-      - provider: custom
-        model: hermes3
-        base_url: http://ollama:11434/v1
-        api_key: ollama-local
 
-  # qwen2.5vl:7b accepte texte + image — rester sur le principal pour éviter
-  # un rechargement (un seul modèle chargé en RAM à la fois) sur le cas
-  # courant (photo nette, PDF avec calque texte). Si la lecture échoue ou le
-  # document est dense/dégradé (voir skill intake-demande-devis, détection
-  # de calque texte illisible), secours vers les mêmes modèles de
-  # transcription pure que la cascade OCR FastAPI (PR #45 ai_service.py),
-  # dans le même ordre (le plus rapide mesuré d'abord) — repris ici
-  # uniquement en filet de secours, jamais comme modèle principal : ce sont
-  # des modèles de transcription pure, pas des modèles d'instruction comme
-  # les autres slots auxiliaires.
+  # qwen2.5vl:7b est le SEUL modèle vision installé (gpt-oss:20b, le
+  # principal, ne sait pas lire d'image — capacités "completion, tools,
+  # thinking", pas "vision"). Différent du principal -> un appel vision
+  # recharge Ollama (voir historique en tête de fichier). Si la lecture
+  # échoue ou le document est dense/dégradé (voir skill
+  # intake-demande-devis, détection de calque texte illisible), secours vers
+  # les mêmes modèles de transcription pure que la cascade OCR FastAPI
+  # (PR #45 ai_service.py), dans le même ordre (le plus rapide mesuré
+  # d'abord) — repris ici uniquement en filet de secours : ce sont des
+  # modèles de transcription pure, pas des modèles d'instruction comme les
+  # autres slots auxiliaires.
   vision:
     provider: main
     model: qwen2.5vl:7b
@@ -127,45 +189,55 @@ auxiliary:
         api_key: ollama-local
         timeout: 240
 
+  # "low" : générer un titre de conversation ne demande aucun raisonnement.
   title_generation:
     provider: main
-    model: qwen2.5:7b
+    model: gpt-oss:20b
     base_url: http://ollama:11434/v1
     api_key: ollama-local
-    reasoning_effort: none
+    reasoning_effort: low
     prefer_fast_model: true
     max_concurrency: 1
 
+  # "low" : routage d'appel d'outil MCP, décision mécanique -- la latence
+  # prime sur la profondeur de réflexion.
   mcp:
     provider: main
-    model: qwen2.5:7b
+    model: gpt-oss:20b
     base_url: http://ollama:11434/v1
     api_key: ollama-local
-    reasoning_effort: none
+    reasoning_effort: low
     max_concurrency: 1
 
+  # "low" : recherche/installation de skill, tâche de lookup, pas de
+  # raisonnement métier.
   skills_hub:
     provider: main
-    model: qwen2.5:7b
+    model: gpt-oss:20b
     base_url: http://ollama:11434/v1
     api_key: ollama-local
-    reasoning_effort: none
+    reasoning_effort: low
     max_concurrency: 1
 
+  # "medium" : une approbation touche une action potentiellement sensible
+  # (voir skill securite-donnees-devis) -- vaut la peine d'un peu plus de
+  # réflexion qu'un simple routage.
   approval:
     provider: main
-    model: qwen2.5:7b
+    model: gpt-oss:20b
     base_url: http://ollama:11434/v1
     api_key: ollama-local
-    reasoning_effort: none
+    reasoning_effort: medium
     max_concurrency: 1
 
+  # "low" : classification/routage rapide, pas de calcul ni de décision
+  # métier finale.
   triage_specifier:
     provider: main
-    model: qwen2.5:7b
+    model: gpt-oss:20b
     base_url: http://ollama:11434/v1
     api_key: ollama-local
-    reasoning_effort: none
+    reasoning_effort: low
     max_concurrency: 1
 
 # Sous-agents = extraction / tâches simples (pattern planner / workers).
@@ -173,7 +245,7 @@ auxiliary:
 delegation:
   base_url: http://ollama:11434/v1
   api_key: ollama-local
-  model: qwen2.5:7b
+  model: gpt-oss:20b
   api_mode: chat_completions
   max_concurrent_children: 1
   worktree_isolation: false

@@ -66,15 +66,25 @@ services:
       # session de traitement de plusieurs devis rapprochees.
       # 2026-08-19 : dechargement immediat (0) -- le keep_alive de 30m puis
       # 5m maintenait encore un modele charge en RAM meme totalement inactif,
-      # sur un VPS a 22 Go sans marge (598 Mo libres observes avec un seul
-      # modele charge). OLLAMA_MAX_LOADED_MODELS=1 garantit DEJA qu'un
-      # modele different force le dechargement du precedent avant de
-      # charger le nouveau, quelle que soit la valeur de keep_alive : ce
-      # reglage ne concerne que l'inactivite totale (aucune requete du
-      # tout). Decision explicite du 2026-08-19 : dechargement systematique
-      # des qu'un modele termine sa reponse, jamais de retention en cas
-      # d'inactivite.
-      OLLAMA_KEEP_ALIVE: 0
+      # sur un VPS a 22 Go sans marge (598 Mo libres observes avec Gemma
+      # 17 Go charge). OLLAMA_MAX_LOADED_MODELS=1 garantit DEJA qu'un modele
+      # different force le dechargement du precedent avant de charger le
+      # nouveau, quelle que soit la valeur de keep_alive : ce reglage ne
+      # concerne que l'inactivite totale (aucune requete du tout).
+      #
+      # 2026-08-23 : retour a 30m -- avec gpt-oss:20b comme modele principal
+      # (14 Go, plus leger que Gemma), la marge mesuree est confortable
+      # (~6-7 Go libres apres chargement, contre 598 Mo avec Gemma). Chaque
+      # rechargement complet depuis le disque coute ~30-40s ; keep_alive=0
+      # payait ce cout a chaque appel, y compris deux appels rapproches du
+      # meme agent. Teste en reel : deux appels consecutifs a chaud gagnent
+      # ~10-15% de temps total (rechargement evite) par rapport a
+      # keep_alive=0, sans effet secondaire observe. Le gain de reutilisation
+      # du cache de contexte d'Ollama, lui, ne se materialise pas en usage
+      # reel car chaque devis pose une question differente (voir l'analyse
+      # dans hermes/config.yaml, section agent.disabled_toolsets) -- seul le
+      # gain "pas de rechargement modele" est retenu ici.
+      OLLAMA_KEEP_ALIVE: 30m
       OLLAMA_MAX_LOADED_MODELS: 1
       OLLAMA_NUM_PARALLEL: 1
       OLLAMA_CONTEXT_LENGTH: 8192
@@ -137,7 +147,7 @@ services:
     environment:
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://ollama:11434/v1}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-ollama-local}
-      HERMES_MODEL: ${HERMES_MODEL:-qwen2.5vl:7b}
+      HERMES_MODEL: ${HERMES_MODEL:-gpt-oss:20b}
       HERMES_DASHBOARD: "0"
       # API OpenAI-compatible. 0.0.0.0 = joignable par Caddy (réseau Docker).
       # Ne pas publier 8642 sur l'hôte : seul Caddy expose hermes.blueseatra.com.
