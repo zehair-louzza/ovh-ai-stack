@@ -106,22 +106,15 @@ Avant tout appel :
 }
 ```
 
-## Outils Hermes désactivés (allègement du prompt)
+## Outils Hermes : tous actifs, une regle reste absolue malgre ca (mis a jour 23/08)
 
-Le prompt fixe de l'agent (`hermes prompt-size`) incluait 46,2 Ko de schémas d'outils sur 18 outils, avant tout message utilisateur. Dans `hermes/config.yaml`, `agent.disabled_toolsets` retire ceux qu'aucune skill devis ne documente comme utilisés, chacun avec un équivalent déjà couvert ailleurs — ce n'est pas une simple optimisation de vitesse, cela **renforce** les règles ci-dessus :
+**Historique (23/08 matin) :** `agent.disabled_toolsets` retirait 6 toolsets (`memory`, `session_search`, `code_execution`, `delegation`, `tts`, `todo`) pour alleger le prompt fixe (46,2 Ko de schemas sur 18 outils). **Revenu en arriere le 23/08 soir (ADR-007, demande explicite de l'utilisateur)** : `disabled_toolsets` a ete entierement retire de `hermes/config.yaml`. Les 6 toolsets sont de nouveau actifs, avec les 6 deja conserves (`file`, `skills`, `clarify`, `browser`, `terminal`, `vision`) : **tous les toolsets Hermes sont actifs**.
 
-| Outil désactivé | Pourquoi c'est sans perte | Où l'équivalent vit déjà |
-|---|---|---|
-| `memory`, `session_search` | La continuité client/devis ne doit jamais dépendre de la mémoire interne d'Hermes ni d'une recherche approximative dans d'anciennes conversations | Supabase/FastAPI, via la référence `DEV-AAAAMMJJ-CLIENT-SITE-Vxx` |
-| `code_execution` | L'IA n'a jamais le droit de calculer un prix elle-même | FastAPI + catalogue seuls chiffrent (règle absolue ci-dessus) |
-| `delegation` (`delegate_task`) | Sous-agent parallèle inutile : `OLLAMA_MAX_LOADED_MODELS=1` sur le VPS empêche toute exécution simultanée réelle | Traitement séquentiel direct par l'agent principal |
-| `tts`, `todo` | Aucune sortie vocale requise ; chaque skill est déjà son propre plan étape par étape | Le texte de chaque `SKILL.md` (phases numérotées) |
+**La regle qui ne bouge pas, malgre la reactivation de `code_execution` :** l'IA n'a **jamais** le droit de calculer un prix elle-meme, quel que soit l'outil technique dont elle dispose. Avant le 23/08 soir, cette regle etait doublement garantie (consigne skill + absence technique de l'outil). Depuis, seule la consigne skill/instruction (ce document, `devis-options-master`, `SOUL.md`) la garantit -- `code_execution` donne desormais a l'agent une capacite de calcul qu'il ne doit **jamais** utiliser pour un prix, une TVA, une marge, des heures-homme ou un total. Seul FastAPI + le catalogue tenant chiffrent (regle absolue ci-dessus, inchangee). Tout usage de `code_execution` observe sur une valeur financiere d'un devis est une violation a signaler immediatement (voir «Incidents» ci-dessous), pas un simple bug de formatage.
 
-Outils conservés et pourquoi : `file` (livrables XLSX/PDF), `skills` (`skill_view`, chargement forcé par `SOUL.md`), `clarify` (question ciblée sur article ambigu, voir `rapprochement-catalogue-sans-prix`), `browser` + `terminal` (DTU/normes/phasage autorisés, jamais un prix), `vision` (lecture de scans/photos, route vers le modèle vision auxiliaire — voir `intake-demande-devis`).
+**Piege historique (23/08 matin, garde pour memoire) :** `terminal` ne devait pas etre desactive seul, car `browser` en dependait silencieusement (le navigateur headless a besoin d'un backend processus) -- desactiver `terminal` faisait disparaitre `browser` du schema envoye au modele, alors que `hermes tools list` continuait a l'afficher check enabled. Sans objet tant que tous les toolsets restent actifs, mais a se souvenir si une future reduction de prompt est retentee : une desactivation partielle ne se verifie pas seulement par `hermes tools list`, il faut confirmer avec `hermes prompt-size` (colonne "Toolsets by size") apres chaque changement.
 
-**Piège vérifié (23/08) : `terminal` NE DOIT PAS être désactivé**, même si aucune skill n'exécute de commande shell directement. Le toolset `browser` en dépend silencieusement (le navigateur headless a besoin d'un backend processus) : désactiver `terminal` a fait disparaître `browser` du schéma envoyé au modèle, alors que `hermes tools list` continuait à l'afficher ✓ enabled — une désactivation ne peut donc pas se vérifier seulement par cette commande, il faut confirmer avec `hermes prompt-size` (colonne "Toolsets by size") après chaque changement.
-
-Si une future skill devis a réellement besoin d'un outil de cette liste, le retirer de `disabled_toolsets`, redéployer, puis reconfirmer via `hermes prompt-size` qu'aucun autre toolset n'a disparu par effet de bord — et documenter ici le nouveau besoin.
+Si le prompt redevient un probleme de latence, revoir `disabled_toolsets` en repartant de ce tableau historique plutot que de redecouvrir les memes arbitrages.
 
 ## Incidents
 
