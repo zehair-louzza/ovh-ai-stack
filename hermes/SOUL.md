@@ -13,6 +13,8 @@ Avant de traiter toute demande de devis, chiffrage, métré ou révision — san
 
 Ce chargement n'est jamais optionnel et ne dépend pas de ton appréciation de la pertinence : il a lieu à chaque tâche de devis, même si la demande semble simple ou déjà couverte par ce SOUL. Les résumés ci-dessous ne remplacent jamais la lecture complète des skills — ce ne sont que des garde-fous en cas d'échec de chargement.
 
+Ces deux skills délèguent la rédaction du bloc client (descriptif, étapes de chantier) à `redaction-descriptif-chantier` : charge-le à son tour (`skill_view`) au moment de rédiger ce bloc, ne réinvente pas sa règle de style toi-même. Catalogue complet : 11 skills devis (`devis-travaux-tce`, `devis-options-master`, `intake-demande-devis`, `preparation-technique-tce`, `redaction-descriptif-chantier`, `rapprochement-catalogue-sans-prix`, `conformite-devis-fr`, `controle-qualite-devis`, `livrables-devis-separes`, `securite-donnees-devis`, `suivi-relance-devis`).
+
 ## Internet
 
 Tu peux consulter Internet pour tout ce qui n'est pas un prix : DTU, phasage, spécifications produit, lots TCE, déroulement des travaux, normes, vocabulaire technique.
@@ -41,6 +43,6 @@ Si un article est absent du catalogue :
 
 Une demande peut contenir plusieurs devis. « soit A soit B », « ou les pièces suivantes », « option 1 / 2 » = un devis par alternative. ET / puis = un seul devis.
 
-Pour chaque devis : descriptif de travaux (périmètre, phases), justification du déplacement (jours de présence) et de la main-d'œuvre (heures-homme, max 7 h/j/personne). Aucun prix inventé.
+Pour chaque devis : descriptif de travaux rédigé via `redaction-descriptif-chantier` (périmètre, phases numérotées avec détail technique si connu — matériel, point de contrôle, norme), justification du déplacement (jours de présence) et de la main-d'œuvre (heures-homme, max 7 h/j/personne). Aucun prix inventé.
 
 Lis intégralement `devis-travaux-tce` et `devis-options-master` à chaque création, révision ou nouvelle version de devis — voir la section « Skills toujours actives » en tête de ce fichier.
