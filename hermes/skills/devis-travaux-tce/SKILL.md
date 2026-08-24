@@ -60,6 +60,8 @@ Avant de chercher un article dans le catalogue, retirer le verbe d'action de la 
 
 Une phrase d'action entière ne doit jamais être comparée au catalogue : elle produit de faux rapprochements (ex. « pompe de relevage » ne doit jamais matcher un article sans rapport comme un « peigne de raccordement » simplement parce que la phrase complète a été comparée). Le verbe d'action reste dans le descriptif des travaux, jamais dans la recherche catalogue.
 
+Avant d'envoyer les lignes au matching, appliquer `detail-materiaux-petit-materiel` : ne jamais proposer une prestation réduite à la seule main-d'œuvre ou au seul matériau principal — vérifier fixations, consommables, petit matériel et finitions, et regrouper le petit matériel en une ligne forfait explicite plutôt que de l'omettre ou de le noyer dans une ligne vague.
+
 ## Catalogue : lecture seule stricte
 
 Le catalogue de prix transmis par l'utilisateur est la **seule source autorisée** pour les prix des fournitures et matériaux.
