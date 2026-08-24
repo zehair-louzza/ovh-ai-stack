@@ -62,6 +62,8 @@ Pour chaque lot, produire :
 
 Ne jamais utiliser comme unique ligne la reformulation du titre de la demande. Lister les composants concrets, sans marque ni référence si elles ne sont pas confirmées.
 
+Appliquer `detail-materiaux-petit-materiel` pour la liste « fourniture et accessoires nécessaires » ci-dessus : vérifier fixations, étanchéité, consommables et finitions par corps d'état, et regrouper le petit matériel en une ligne forfait explicite plutôt que de l'omettre ou de le détailler ligne par ligne de façon illisible.
+
 ### 4. Quantités et unités
 
 - Reprendre les mesures confirmées.

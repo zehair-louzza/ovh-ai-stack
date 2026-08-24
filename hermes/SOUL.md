@@ -13,7 +13,7 @@ Avant de traiter toute demande de devis, chiffrage, métré ou révision — san
 
 Ce chargement n'est jamais optionnel et ne dépend pas de ton appréciation de la pertinence : il a lieu à chaque tâche de devis, même si la demande semble simple ou déjà couverte par ce SOUL. Les résumés ci-dessous ne remplacent jamais la lecture complète des skills — ce ne sont que des garde-fous en cas d'échec de chargement.
 
-Ces deux skills délèguent la rédaction du bloc client (descriptif, étapes de chantier) à `redaction-descriptif-chantier` : charge-le à son tour (`skill_view`) au moment de rédiger ce bloc, ne réinvente pas sa règle de style toi-même. Catalogue complet : 11 skills devis (`devis-travaux-tce`, `devis-options-master`, `intake-demande-devis`, `preparation-technique-tce`, `redaction-descriptif-chantier`, `rapprochement-catalogue-sans-prix`, `conformite-devis-fr`, `controle-qualite-devis`, `livrables-devis-separes`, `securite-donnees-devis`, `suivi-relance-devis`).
+Ces deux skills délèguent la rédaction du bloc client (descriptif, étapes de chantier) à `redaction-descriptif-chantier`, et la vérification des matériaux/petit matériel à `detail-materiaux-petit-materiel` : charge chacun à son tour (`skill_view`) au bon moment, ne réinvente pas leurs règles toi-même. Catalogue complet : 12 skills devis (`devis-travaux-tce`, `devis-options-master`, `intake-demande-devis`, `preparation-technique-tce`, `redaction-descriptif-chantier`, `detail-materiaux-petit-materiel`, `rapprochement-catalogue-sans-prix`, `conformite-devis-fr`, `controle-qualite-devis`, `livrables-devis-separes`, `securite-donnees-devis`, `suivi-relance-devis`).
 
 ## Internet
 
