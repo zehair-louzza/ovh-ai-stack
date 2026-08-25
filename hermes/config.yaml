@@ -65,18 +65,35 @@
 # reasoning_effort: none n'est fiable que sur les modèles qui ne pensent pas
 # nativement, pas comme mécanisme de désactivation d'un modèle "thinking".
 #
-# 2026-08-25 : glm-4.7-flash:Q3_K_M installé et testé en réel hors du gateway
-# Hermes (appel direct /api/chat) -- `ollama show` confirme completion, tools,
-# thinking natif ; think=true/false accepté proprement en BOOLÉEN (pas de
-# support gradué "low"/"medium"/"high" essayé ni confirmé, à la différence de
-# gpt-oss). La doc officielle Hermes (reasoning_effort: none/minimal/low/
-# medium/high/xhigh/max/ultra) NE PRÉCISE PAS comment ce réglage se traduit
-# pour un modèle Ollama à réflexion booléenne -- ni le champ Ollama natif
-# "think", ni sa traduction éventuelle en true/false n'y sont documentés.
-# "high" ci-dessous est donc un choix motivé (cohérent avec ADR-007, "tout
-# est actif") mais NON VÉRIFIÉ à ce niveau -- seul un test réel via le gateway
-# Hermes lui-même (pas un appel Ollama direct) confirmera si ce champ active
-# effectivement le raisonnement du modèle ou est ignoré silencieusement.
+# 2026-08-25 : glm-4.7-flash:Q3_K_M essaye comme principal de l'agent, puis
+# REVERT le meme jour apres un vrai test via le gateway Hermes lui-meme
+# (pas un simple appel Ollama direct, voir ci-dessous pourquoi la difference
+# compte). Reste utilise ailleurs (HERMES_REASONING_MODEL, role=reason de
+# ai_service.py cote Blueseatra) ou le systeme prompt est court -- voir ce
+# fichier backend pour ce cas qui, lui, fonctionne bien.
+#
+# Cause reelle de l'echec ICI (agent Hermes) : le systeme prompt + schemas
+# d'outils que Hermes envoie a CHAQUE appel pese ~15 000 tokens (mesure
+# reelle, requete test triviale). Sur ce CPU sans GPU, le PREFILL (lecture
+# du prompt, avant meme de generer un mot) de glm-4.7-flash tourne a
+# ~10-15 tokens/s et DECLINE avec la longueur -- mesure reelle : 487s pour
+# traiter seulement 5120/15248 tokens (34%), jamais termine dans un delai
+# de 630s. Un modele MoE (29.9B total/~3B actifs) est rapide en GENERATION
+# (~7-8.4 tok/s confirmes sur un prompt court, role=reason) mais le calcul
+# de routage d'experts pendant le prefill d'un ENORME prompt ne bascule pas
+# sur ce gain sur ce backend llama.cpp/CPU -- inutilisable pour un agent qui
+# envoie systematiquement un gros system prompt, contrairement a un appel
+# ai_service.py isole avec un prompt de tache court.
+#
+# Le probleme du contexte reellement servi (OLLAMA_CONTEXT_LENGTH: 8192,
+# largement sous les 15 248 tokens necessaires, voir compose.yaml) a aussi
+# ete rencontre pendant ce test ("exceeds the available context size (8192
+# tokens)") avant meme le probleme de vitesse -- Hermes calcule ses budgets
+# sur la capacite DECLAREE du modele (202 752 tokens via `ollama show`), pas
+# sur ce qu'Ollama sert reellement, d'ou le decalage. Un essai a 32768 a
+# leve ce premier probleme mais expose le vrai probleme (vitesse de
+# prefill) juste apres -- donc NE PAS relever OLLAMA_CONTEXT_LENGTH pour
+# glm-4.7-flash sans revoir aussi ce probleme de vitesse.
 
 # Forme officielle : model est un mapping (provider, default, base_url, api_mode).
 # https://hermes-agent.nousresearch.com/docs/user-guide/configuring-models
@@ -84,28 +101,21 @@
 # provider: custom obligatoire pour un endpoint OpenAI-compatible local.
 model:
   provider: custom
-  # 2026-08-25 : glm-4.7-flash:Q3_K_M devient le modele PRINCIPAL de l'agent
-  # (demande explicite de l'utilisateur, teste en reel avant ce changement --
-  # voir commentaire agent.reasoning_effort ci-dessous). `ollama show` confirme
-  # tools + contexte 202752 (bien au-dessus du minimum 64K exige par Hermes
-  # pour le modele principal -- exactement les deux contraintes qui avaient
-  # fait echouer qwen2.5vl:7b (pas de tools) et qwen2.5:7b (contexte 32K) le
-  # 23/08, voir historique ci-dessus). gpt-oss:20b (ex-principal) reste
-  # installe et devient repli (voir fallback_providers plus bas).
-  default: glm-4.7-flash:Q3_K_M
+  # 2026-08-25 : REVERT sur gpt-oss:20b apres l'echec reel de glm-4.7-flash
+  # comme principal (voir commentaire au-dessus -- prefill trop lent avec le
+  # gros system prompt/outils de Hermes). gpt-oss:20b reste le seul modele
+  # avec tools + contexte >=64K + vitesse reelle validee pour ce role.
+  default: gpt-oss:20b
   base_url: http://ollama:11434/v1
   api_key: ollama-local
   api_mode: chat_completions
 
-# glm-4.7-flash:Q3_K_M PENSE nativement (thinking confirme via `ollama show`,
-# teste en reel avec think=true/false booleen -- voir commentaire plus haut).
+# gpt-oss:20b PENSE nativement et Ollama n'accepte que "low"/"medium"/"high"
+# pour ce modele ("none"/false est ignore -- docs.ollama.com/capabilities/thinking).
 # "high" pour la conversation devis principale (raisonnement maximal,
-# demande explicite le 25/08, coherent avec ADR-007) -- MAIS non verifie a
-# travers le gateway Hermes lui-meme (voir avertissement ci-dessus) : a
-# confirmer par un test reel post-deploiement avant de considerer ce
-# reglage fiable. Chaque slot auxiliaire ci-dessous choisit son propre
-# niveau selon la nature de sa tache (voir commentaires par slot, tous
-# encore sur gpt-oss:20b) et n'est PAS affecte par ce changement.
+# demande explicite le 23/08 -- voir ADR-007) ; chaque slot auxiliaire
+# ci-dessous choisit son propre niveau selon la nature de sa tache (voir
+# commentaires par slot) et n'est PAS affecte par ce changement.
 agent:
   # 2026-08-23 (revu) : "high" au lieu de "medium" -- demande explicite de
   # l'utilisateur, raisonnement maximal privilegie sur la vitesse. Mesure
@@ -130,17 +140,10 @@ agent:
   # https://hermes-agent.nousresearch.com/docs/user-guide/configuration#global-toolset-disable
 
 
-# gpt-oss:20b (ex-principal jusqu'au 25/08) satisfait tools + contexte 64K et
-# a un raisonnement natif confirme : repli de premier rang si glm-4.7-flash
-# echoue (OOM, timeout, ou le champ reasoning_effort s'avere mal traduit
-# pour un modele booleen -- voir avertissement plus haut). hermes3 reste en
-# dernier recours (tools + contexte 64K/131072, mais dense 8B sans MoE ni
-# raisonnement natif, donc plus lent et moins fiable sur un devis complexe).
+# hermes3 satisfait tools + contexte 64K (131072) : repli fonctionnel si
+# gpt-oss:20b echoue (OOM, timeout) -- nettement plus lent (dense 8B, pas de
+# MoE) mais reel, contrairement a qwen2.5:7b (contexte 32K, insuffisant).
 fallback_providers:
-  - provider: custom
-    model: gpt-oss:20b
-    base_url: http://ollama:11434/v1
-    key_env: OPENAI_API_KEY
   - provider: custom
     model: hermes3
     base_url: http://ollama:11434/v1
