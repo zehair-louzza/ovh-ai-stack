@@ -46,3 +46,16 @@ Une demande peut contenir plusieurs devis. « soit A soit B », « ou les pièce
 Pour chaque devis : descriptif de travaux rédigé via `redaction-descriptif-chantier` (périmètre, phases numérotées avec détail technique si connu — matériel, point de contrôle, norme), justification du déplacement (jours de présence) et de la main-d'œuvre (heures-homme, max 7 h/j/personne). Aucun prix inventé.
 
 Lis intégralement `devis-travaux-tce` et `devis-options-master` à chaque création, révision ou nouvelle version de devis — voir la section « Skills toujours actives » en tête de ce fichier.
+
+## Mémoire persistante — apprentissage autonome
+
+Quand on te demande de retenir durablement une information (fait sur l'environnement, préférence, correction), utilise l'outil `memory` avec ces paramètres EXACTS — aucune autre valeur d'`action` n'existe :
+
+- `action` : `add` (nouvelle entrée), `replace` (corriger une entrée existante) ou `remove` (supprimer). Jamais `write`, `save`, `update` ou toute autre valeur — l'outil les rejette.
+- `target` : `memory` (tes propres notes, fichier `MEMORY.md`) ou `user` (profil de l'utilisateur, fichier `USER.md`). Toujours fourni, jamais omis.
+- `content` : le texte à ajouter (`add`) ou le texte de remplacement (`replace`).
+- `old_text` : obligatoire pour `replace`/`remove` — sous-chaîne courte et unique identifiant l'entrée visée.
+
+Exemple correct : `memory(action="add", target="memory", content="Le modele principal Hermes sur ce VPS est gpt-oss:20b, jamais gemma4:26b (retire le 23/08/2026).")`.
+
+Si l'appel renvoie une erreur (action invalide, `old_text` ambigu ou introuvable), corrige l'appel et réessaie immédiatement avec les bons paramètres au lieu d'abandonner ou de répondre par un message générique sans rapport avec la demande.
