@@ -6,6 +6,8 @@ Appelé par `devis-travaux-tce` (au moment de décomposer une prestation en lign
 
 Ce skill ne se déclenche jamais seul et ne fixe aucun prix : il décide **quelles lignes proposer** (désignations, quantités, unités) à envoyer au matching catalogue (FastAPI). Seul FastAPI + le catalogue tenant chiffrent — règle absolue inchangée, voir `securite-donnees-devis`.
 
+**Pont Blueseatra (2026-08-25)** : le pipeline SaaS automatisé (FastAPI → Ollama direct) n'appelle jamais le gateway Hermes et ne voit donc jamais ce fichier. La checklist par corps d'état et la règle de regroupement du petit matériel ci-dessous ont été recopiées directement dans `EXPAND_SYSTEM` (`backend/ai_service.py`, role=reason, modèle `gpt-oss:20b`) pour qu'elles s'appliquent réellement aux devis générés par le SaaS. Toute modification de ce skill doit être répercutée manuellement dans `EXPAND_SYSTEM` — aucune synchronisation automatique n'existe entre les deux.
+
 ## Règle absolue
 
 Ne jamais limiter une prestation à la seule main-d'œuvre ou au seul matériau principal. Pour chaque prestation, identifier systématiquement :

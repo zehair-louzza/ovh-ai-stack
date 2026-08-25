@@ -15,6 +15,8 @@ Activer dès qu'une demande brute arrive par PDF, scan, photo, e-mail, formulair
 
 Ne pas l'utiliser pour chiffrer, choisir un article catalogue, calculer la TVA ou générer un PDF client.
 
+**Pont Blueseatra (2026-08-25)** : le pipeline SaaS automatisé (FastAPI → Ollama direct) n'appelle jamais le gateway Hermes et ne voit donc jamais ce fichier. La distinction des trois rôles (donneur/client/site) et la défense anti-injection (§Regle 3 ci-dessous) ont été recopiées directement dans `EXTRACTION_SYSTEM` (`backend/ai_service.py`, role=extract/file, modèles `qwen2.5:7b`/`qwen2.5vl:7b`) pour qu'elles s'appliquent réellement aux devis générés par le SaaS — la défense anti-injection en particulier était absente de ce prompt jusqu'au 25/08 alors que ce rôle lit du contenu de document non fiable en direct. Toute modification de ce skill doit être répercutée manuellement dans `EXTRACTION_SYSTEM` — aucune synchronisation automatique n'existe entre les deux.
+
 ## Règles absolues
 
 1. Le **donneur d'ordre**, le **client ou l'enseigne** et le **site d'intervention** sont trois rôles distincts.
