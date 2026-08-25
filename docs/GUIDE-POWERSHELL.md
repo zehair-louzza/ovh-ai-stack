@@ -223,7 +223,7 @@ docker compose logs --tail=50 hermes
 
 ## 7. Télécharger les modèles (long)
 
-`qwen3.6:27b` ≈ 17 Go. Ne coupez pas la session.
+`gpt-oss:20b` ≈ 13 Go, `qwen2.5vl:7b` ≈ 6 Go. Ne coupez pas la session.
 
 ```bash
 bash scripts/pull-models.sh
@@ -241,7 +241,7 @@ free -h
 docker stats --no-stream
 ```
 
-Ollama doit rester sous ~18 Go. Si le 27B swap trop : dans `.env` mettez `HERMES_MODEL=qwen2.5:14b` puis `docker compose up -d hermes`.
+Ollama doit rester sous ~18 Go. Si `gpt-oss:20b` swap trop : dans `.env` mettez `HERMES_MODEL=hermes3` (seul modèle installé avec tools + contexte ≥64K, voir ADR-006/ADR-007) puis `docker compose up -d hermes`.
 
 ---
 
@@ -317,7 +317,7 @@ Si ça marche, le mot de passe SSH est déjà désactivé par `host-hardening.sh
 | `Permission denied (publickey)` | `ssh-add $env:USERPROFILE\.ssh\ovh_vps` puis réessayer `ssh ovh-vps` |
 | Caddy `NXDOMAIN` / ACME fail | DNS A pas encore propagé : `nslookup ia.blueseatra.com` |
 | Hermes restart loop | `docker compose logs hermes` — souvent Ollama pas ready |
-| OOM / freeze | passer sur `qwen2.5:14b` |
+| OOM / freeze | passer sur `hermes3` (`HERMES_MODEL=hermes3` dans `.env`, seul fallback fonctionnel testé — voir ADR-006/ADR-007) |
 | `docker: command not found` après reboot | `sudo usermod -aG docker ubuntu` puis se reconnecter |
 | Port 11434 visible de l'extérieur | `sudo ss -lntp` — il ne doit PAS écouter sur `0.0.0.0:11434` |
 

@@ -27,14 +27,22 @@ Internet
 FastAPI (Render, Francfort) appelle `https://$PUBLIC_DOMAIN/api/chat` avec `X-Api-Key`.
 n8n déclenche les flux déterministes. Hermes Agent n'a pas le droit de calculer un prix.
 
-Slots Hermes (voir [ADR-003](docs/decisions/ADR-003-hermes-raisonnement-gemma4.md)) :
+Slots Hermes (état réel au 25/08/2026 — voir [ADR-006](docs/decisions/ADR-006-gpt-oss-reasoning-model-graduated-effort.md) et [ADR-007](docs/decisions/ADR-007-reactivation-toolsets-et-reasoning-high.md) ; ADR-002/ADR-003 sont l'historique de la config initiale, remplacée depuis) :
 
 | Rôle Blueseatra | Clé Hermes | Modèle |
 |---|---|---|
-| Raisonnement | `model` + `agent.reasoning_effort` | `gemma4:26b` |
-| Extraction / sous-agents | `delegation` + `auxiliary.web_extract` | `qwen2.5:14b` |
-| Secours local | `fallback_providers` | `qwen3.6:27b` puis `qwen2.5:14b` puis `hermes3` |
-| Génération devis SaaS | hors Hermes (FastAPI → Ollama) | `qwen3.6:27b` |
+| Raisonnement (agent Hermes) | `model` + `agent.reasoning_effort: high` | `gpt-oss:20b` |
+| Vision (slot auxiliaire, seul modèle multimodal) | `auxiliary.vision` | `qwen2.5vl:7b` |
+| Extraction légère / tâches rapides | `auxiliary.web_extract` | `gpt-oss:20b` |
+| Secours si `gpt-oss:20b` échoue | `fallback_providers` | `hermes3` |
+| Génération devis SaaS — raisonnement/extraction | hors Hermes (FastAPI → Ollama, `HERMES_REASONING_MODEL`) | `gpt-oss:20b` |
+| Génération devis SaaS — Description + Étapes uniquement | hors Hermes (FastAPI → Ollama, `HERMES_DESCRIPTION_MODEL`) | `glm-4.7-flash:Q3_K_M` |
+
+`gemma4:26b`, `qwen3.6:27b`, `qwen3:14b`, `deepseek-r1:14b`, `qwen2.5:14b` et `Phi-4-reasoning-vision-15B` ont été retirés du VPS le 23/08/2026 (63 Go libérés, aucun ne raisonnait ET n'avait la vision à la fois) — ne plus les réinstaller.
+
+### Mémoire persistante / apprentissage autonome
+
+Hermes Agent a une boucle d'apprentissage intégrée (mémoire persistante `MEMORY.md`/`USER.md`, création/amélioration autonome de skills) activée par défaut. Elle a été vérifiée en réel le 25/08/2026 : un bug d'usage de l'outil `memory` (action invalide) la rendait totalement inopérante, corrigé et renforcé dans `hermes/SOUL.md` (section « Mémoire persistante — apprentissage autonome ») — voir [ADR-008](docs/decisions/ADR-008-hermes-apprentissage-autonome-fiabilite.md).
 
 ## Prérequis déjà faits sur le VPS
 
@@ -66,4 +74,5 @@ Guide unique, commandes **une par une** (PowerShell casse les pipes multi-lignes
 - [Hermes API server](https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server)
 - [n8n Docker Compose](https://docs.n8n.io/deploy/host-n8n/install-options/use-a-cloud-provider/use-docker-compose)
 - [Caddy matchers](https://caddyserver.com/docs/caddyfile/matchers)
-- [gemma4:26b](https://ollama.com/library/gemma4:26b) · [qwen3.6:27b](https://ollama.com/library/qwen3.6:27b) · [hermes3](https://ollama.com/library/hermes3)
+- [gpt-oss](https://ollama.com/library/gpt-oss) · [qwen2.5vl](https://ollama.com/library/qwen2.5vl) · [hermes3](https://ollama.com/library/hermes3)
+- [Hermes Agent — Mémoire persistante](https://hermes-agent.nousresearch.com/docs/user-guide/features/memory)
