@@ -53,16 +53,30 @@
 # provider: auto interdit (la découverte auxiliaire tenterait OpenRouter /
 # Nous Portal).
 #
-# Raisonnement (agent.reasoning_effort) : aucun modèle installé ne figure
-# dans la liste des modèles « thinking » supportés par Ollama (DeepSeek R1,
-# Qwen 3, GPT-OSS, DeepSeek-v3.1 — https://docs.ollama.com/capabilities/thinking).
-# Un effort "high"/"medium" serait donc silencieusement sans effet : réglé
-# explicitement sur "none" partout pour ne pas laisser croire à un contrôle
-# qui n'existe pas. Si un modèle "thinking" est installé un jour, revoir ce
-# réglage — et noter le bug connu de Hermes sur provider "custom"
+# Raisonnement (agent.reasoning_effort) : au 23/08, aucun modèle installé ne
+# figurait dans la liste des modèles « thinking » supportés par Ollama
+# (DeepSeek R1, Qwen 3, GPT-OSS, DeepSeek-v3.1 —
+# https://docs.ollama.com/capabilities/thinking) autre que gpt-oss:20b, déjà
+# repointé sur "high" (voir bloc agent ci-dessous). Un effort "high"/"medium"
+# reste donc explicitement "none" pour tout slot auxiliaire qui n'a pas de
+# raisonnement natif confirmé — pas de contrôle fantôme. Noter le bug connu
+# de Hermes sur provider "custom"
 # (https://github.com/NousResearch/hermes-agent/issues/25758) :
 # reasoning_effort: none n'est fiable que sur les modèles qui ne pensent pas
 # nativement, pas comme mécanisme de désactivation d'un modèle "thinking".
+#
+# 2026-08-25 : glm-4.7-flash:Q3_K_M installé et testé en réel hors du gateway
+# Hermes (appel direct /api/chat) -- `ollama show` confirme completion, tools,
+# thinking natif ; think=true/false accepté proprement en BOOLÉEN (pas de
+# support gradué "low"/"medium"/"high" essayé ni confirmé, à la différence de
+# gpt-oss). La doc officielle Hermes (reasoning_effort: none/minimal/low/
+# medium/high/xhigh/max/ultra) NE PRÉCISE PAS comment ce réglage se traduit
+# pour un modèle Ollama à réflexion booléenne -- ni le champ Ollama natif
+# "think", ni sa traduction éventuelle en true/false n'y sont documentés.
+# "high" ci-dessous est donc un choix motivé (cohérent avec ADR-007, "tout
+# est actif") mais NON VÉRIFIÉ à ce niveau -- seul un test réel via le gateway
+# Hermes lui-même (pas un appel Ollama direct) confirmera si ce champ active
+# effectivement le raisonnement du modèle ou est ignoré silencieusement.
 
 # Forme officielle : model est un mapping (provider, default, base_url, api_mode).
 # https://hermes-agent.nousresearch.com/docs/user-guide/configuring-models
@@ -70,17 +84,28 @@
 # provider: custom obligatoire pour un endpoint OpenAI-compatible local.
 model:
   provider: custom
-  default: gpt-oss:20b
+  # 2026-08-25 : glm-4.7-flash:Q3_K_M devient le modele PRINCIPAL de l'agent
+  # (demande explicite de l'utilisateur, teste en reel avant ce changement --
+  # voir commentaire agent.reasoning_effort ci-dessous). `ollama show` confirme
+  # tools + contexte 202752 (bien au-dessus du minimum 64K exige par Hermes
+  # pour le modele principal -- exactement les deux contraintes qui avaient
+  # fait echouer qwen2.5vl:7b (pas de tools) et qwen2.5:7b (contexte 32K) le
+  # 23/08, voir historique ci-dessus). gpt-oss:20b (ex-principal) reste
+  # installe et devient repli (voir fallback_providers plus bas).
+  default: glm-4.7-flash:Q3_K_M
   base_url: http://ollama:11434/v1
   api_key: ollama-local
   api_mode: chat_completions
 
-# gpt-oss:20b PENSE nativement et Ollama n'accepte que "low"/"medium"/"high"
-# pour ce modèle ("none"/false est ignoré -- docs.ollama.com/capabilities/thinking).
+# glm-4.7-flash:Q3_K_M PENSE nativement (thinking confirme via `ollama show`,
+# teste en reel avec think=true/false booleen -- voir commentaire plus haut).
 # "high" pour la conversation devis principale (raisonnement maximal,
-# demande explicite le 23/08 -- voir ADR-007) ; chaque slot auxiliaire
-# ci-dessous choisit son propre niveau selon la nature de sa tache (voir
-# commentaires par slot) et n'est PAS affecte par ce changement.
+# demande explicite le 25/08, coherent avec ADR-007) -- MAIS non verifie a
+# travers le gateway Hermes lui-meme (voir avertissement ci-dessus) : a
+# confirmer par un test reel post-deploiement avant de considerer ce
+# reglage fiable. Chaque slot auxiliaire ci-dessous choisit son propre
+# niveau selon la nature de sa tache (voir commentaires par slot, tous
+# encore sur gpt-oss:20b) et n'est PAS affecte par ce changement.
 agent:
   # 2026-08-23 (revu) : "high" au lieu de "medium" -- demande explicite de
   # l'utilisateur, raisonnement maximal privilegie sur la vitesse. Mesure
@@ -105,10 +130,17 @@ agent:
   # https://hermes-agent.nousresearch.com/docs/user-guide/configuration#global-toolset-disable
 
 
-# hermes3 satisfait tools + contexte 64K (131072) : repli fonctionnel si
-# gpt-oss:20b échoue (OOM, timeout) — nettement plus lent (dense 8B, pas de
-# MoE) mais réel, contrairement à qwen2.5:7b (contexte 32K, insuffisant).
+# gpt-oss:20b (ex-principal jusqu'au 25/08) satisfait tools + contexte 64K et
+# a un raisonnement natif confirme : repli de premier rang si glm-4.7-flash
+# echoue (OOM, timeout, ou le champ reasoning_effort s'avere mal traduit
+# pour un modele booleen -- voir avertissement plus haut). hermes3 reste en
+# dernier recours (tools + contexte 64K/131072, mais dense 8B sans MoE ni
+# raisonnement natif, donc plus lent et moins fiable sur un devis complexe).
 fallback_providers:
+  - provider: custom
+    model: gpt-oss:20b
+    base_url: http://ollama:11434/v1
+    key_env: OPENAI_API_KEY
   - provider: custom
     model: hermes3
     base_url: http://ollama:11434/v1
