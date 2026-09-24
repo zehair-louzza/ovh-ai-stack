@@ -1,8 +1,27 @@
-# ovh-ai-stack
+<div align="center">
 
-Stack IA auto-hébergée pour [Blueseatra](https://github.com/zehair-louzza/Blueseatra) sur VPS OVH (Roubaix).
+<img src="docs/assets/blueseatra-lockup.png" alt="Blueseatra" width="300">
 
-Ollama, Hermes Agent et n8n tournent dans des conteneurs séparés. Seul Caddy écoute sur Internet. Les documents clients ne quittent pas l'UE par défaut.
+### ovh-ai-stack : l'IA auto-hébergée de Blueseatra
+
+Ollama, Hermes Agent et n8n sur un VPS OVH en France, derrière Caddy. Les documents clients ne quittent pas l'UE par défaut.
+
+![OVHcloud](https://img.shields.io/badge/VPS-OVHcloud%20Roubaix-1B3F73?logo=ovh&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-Compose-1B3F73?logo=docker&logoColor=white) ![Ollama](https://img.shields.io/badge/Mod%C3%A8les-Ollama-3AAFB9?logo=ollama&logoColor=white) ![n8n](https://img.shields.io/badge/Flux-n8n-3AAFB9?logo=n8n&logoColor=white) ![Caddy](https://img.shields.io/badge/TLS-Caddy-3AAFB9?logo=caddy&logoColor=white) ![RGPD](https://img.shields.io/badge/donn%C3%A9es-UE%20%C2%B7%20RGPD-555)
+
+[**Guide d'installation**](docs/GUIDE-POWERSHELL.md) · [**Sécurité**](docs/SECURITE.md) · [**RGPD**](docs/RGPD.md) · [**Décisions (ADR)**](docs/decisions/) · [**SaaS Blueseatra**](https://github.com/zehair-louzza/Blueseatra)
+
+</div>
+
+---
+
+## En bref
+
+| Sujet | En pratique |
+|---|---|
+| **Rôle** | Moteur IA privé du SaaS [Blueseatra](https://github.com/zehair-louzza/Blueseatra) : extraction, vision, rédaction des descriptifs |
+| **Exposition** | Seul Caddy écoute sur Internet (80/443, clé `X-Api-Key`) ; Ollama (11434) n'est jamais exposé |
+| **Règle d'or** | Hermes Agent n'a pas le droit de calculer un prix : les montants restent des règles fixes du SaaS |
+| **Données** | Hébergement en France, aucun envoi hors UE par défaut |
 
 ## Pourquoi un dépôt à part
 
