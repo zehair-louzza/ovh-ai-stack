@@ -271,6 +271,20 @@ delegation:
 # API chat OpenAI-compatible (port 8642). La clé reste dans .env (API_SERVER_KEY).
 # Env Compose prime sur ce bloc.
 # https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server
+# API Mistral (UE) pour l'agent principal : /model custom:mistral:mistral-medium-latest
+# Clé : MISTRAL_API_KEY du .env (29/09/2026, ticket Blueseatra #88).
+providers:
+  mistral:
+    name: Mistral AI
+    api: https://api.mistral.ai/v1
+    key_env: MISTRAL_API_KEY
+    transport: chat_completions
+    default_model: mistral-medium-latest
+    models:
+      mistral-medium-latest: { context_length: 128000 }
+      mistral-large-latest: { context_length: 128000 }
+      mistral-small-latest: { context_length: 128000 }
+
 gateway:
   api_server:
     enabled: true

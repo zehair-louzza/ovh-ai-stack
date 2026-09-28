@@ -46,22 +46,34 @@
 	}
 }
 
-# Hermes Agent gateway (orchestration). Même clé API que Ollama.
+# hermes.blueseatra.com — deux accès sur le même nom (29/09/2026) :
+#  1. Machines (API Blueseatra sur Render) : en-tête X-Api-Key = OLLAMA_API_KEY
+#     -> passerelle Hermès sans outils (hermes-passerelle:8642). Caddy injecte
+#     le Bearer API_SERVER_KEY attendu par Hermès (ADR-004).
+#  2. Navigateur : identifiant + mot de passe (basic_auth, hachage bcrypt en
+#     base64 dans .env, généré par scripts/activer-hermes.sh), puis page de
+#     connexion du tableau de bord de l'agent principal (hermes:9119).
 {$HERMES_HOST} {
 	import security_headers
 
-	@authorized {
-		header X-Api-Key {$OLLAMA_API_KEY}
+	@machine header X-Api-Key *
+	handle @machine {
+		@unauthorized not header X-Api-Key {$OLLAMA_API_KEY}
+		respond @unauthorized "Unauthorized" 401
+		reverse_proxy hermes-passerelle:8642 {
+			header_up Host {upstream_hostport}
+			header_up Authorization "Bearer {$API_SERVER_KEY}"
+			header_up -X-Api-Key
+			flush_interval -1
+		}
 	}
 
-	@unauthorized {
-		not header X-Api-Key {$OLLAMA_API_KEY}
-	}
-
-	respond @unauthorized "Unauthorized" 401
-
-	reverse_proxy @authorized hermes:8642 {
-		header_up Host {upstream_hostport}
-		flush_interval -1
+	handle {
+		basic_auth {
+			{$HERMES_WEB_USER} {$HERMES_WEB_HASH}
+		}
+		reverse_proxy hermes:9119 {
+			flush_interval -1
+		}
 	}
 }
