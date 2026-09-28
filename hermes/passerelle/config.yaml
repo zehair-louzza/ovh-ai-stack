@@ -1,0 +1,87 @@
+# Hermès « passerelle » — instance DÉDIÉE au SaaS Blueseatra (29/09/2026).
+#
+# Pourquoi une 2e instance : l'agent principal (hermes/config.yaml) garde TOUS
+# ses outils, sa mémoire et ses skills (ADR-007, ADR-008). Mais le SaaS lui
+# envoie des documents clients, contenu non fiable : les exposer à un agent qui
+# a un terminal serait une porte d'entrée. Cette instance ne fait que relayer
+# chaque requête au modèle demandé et renvoyer la réponse. Aucun outil.
+#
+# Le SaaS choisit le fournisseur à chaque requête (champ "provider" + "model") :
+#   custom:ollama  -> modèles du VPS (PaddleOCR-VL par défaut pour l'OCR)
+#   custom:mistral -> API Mistral (UE), clé MISTRAL_API_KEY du .env
+# Doc : https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server/
+#       https://hermes-agent.nousresearch.com/docs/integrations/providers/
+
+model:
+  provider: custom:ollama
+  default: hermes3
+
+providers:
+  ollama:
+    name: Ollama (VPS)
+    api: http://ollama:11434/v1
+    api_key: ollama-local
+    transport: chat_completions
+    default_model: hermes3
+    # Hermès exige >= 64 000 jetons de contexte déclarés pour le modèle
+    # utilisé. Les modèles d'OCR et d'extraction ne font qu'un appel court
+    # (une page, un document) : la valeur déclarée ici sert au contrôle
+    # d'Hermès, pas à la génération.
+    models:
+      "AuditAid/PaddleOCR-VL-1.6-0.9B:latest": { context_length: 65536 }
+      "glm-ocr:latest": { context_length: 65536 }
+      "LightOnOCR-2:1b": { context_length: 65536 }
+      "olmocr2:7b-q8": { context_length: 65536 }
+      "qwen2.5vl:7b": { context_length: 128000 }
+      "qwen2.5:7b": { context_length: 65536 }
+      "gpt-oss:20b": { context_length: 131072 }
+      "hermes3": { context_length: 131072 }
+      "glm-4.7-flash:Q3_K_M": { context_length: 131072 }
+  mistral:
+    name: Mistral AI
+    api: https://api.mistral.ai/v1
+    key_env: MISTRAL_API_KEY
+    transport: chat_completions
+    default_model: mistral-medium-latest
+    models:
+      mistral-medium-latest: { context_length: 128000 }
+      mistral-large-latest: { context_length: 128000 }
+      mistral-small-latest: { context_length: 128000 }
+
+agent:
+  reasoning_effort: none
+  # Aucun outil : noms relevés dans toolsets.py d'Hermès.
+  disabled_toolsets:
+    - terminal
+    - file
+    - web
+    - search
+    - x_search
+    - browser
+    - code_execution
+    - delegation
+    - cronjob
+    - memory
+    - session_search
+    - skills
+    - todo
+    - vision
+    - video
+    - image_gen
+    - video_gen
+    - tts
+    - computer_use
+    - connections
+    - homeassistant
+    - kanban
+    - spotify
+    - clarify
+
+gateway:
+  api_server:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8642
+    max_concurrent_runs: 1
+    # Respecter le modèle demandé par le SaaS.
+    direct_model_requests: true
