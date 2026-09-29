@@ -171,7 +171,10 @@ services:
       - hermes_data:/opt/data
       - ./hermes/config.yaml:/opt/data/config.yaml:ro
       - ./hermes/SOUL.md:/opt/data/SOUL.md:ro
-      - ./hermes/skills:/opt/data/skills:ro
+      # Skills devis Blueseatra (29/09/2026) : dossier externe en lecture seule.
+      # /opt/data/skills n'est plus masqué : les skills fournis avec Hermès
+      # y sont resynchronisés au démarrage.
+      - ./hermes/skills-blueseatra:/opt/blueseatra-skills:ro
     networks:
       - backend
     depends_on:

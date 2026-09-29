@@ -271,6 +271,13 @@ delegation:
 # API chat OpenAI-compatible (port 8642). La clé reste dans .env (API_SERVER_KEY).
 # Env Compose prime sur ce bloc.
 # https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server
+# Skills devis Blueseatra, prioritaires (voir SOUL.md) : extraire-demande-travaux
+# et decrire-demande-travaux. Les skills fournis avec Hermès restent dans
+# /opt/data/skills. En cas de doublon de nom, le skill local l'emporte.
+skills:
+  external_dirs:
+    - /opt/blueseatra-skills
+
 # API Mistral (UE) pour l'agent principal : /model custom:mistral:mistral-medium-latest
 # Clé : MISTRAL_API_KEY du .env (29/09/2026, ticket Blueseatra #88).
 providers:
