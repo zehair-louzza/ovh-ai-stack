@@ -61,7 +61,7 @@ except Exception: print("ÉCHEC :", sys.stdin.read()[:0] or "voir ci-dessous")' 
 IMG="data:image/png;base64,$(base64 -w0 scripts/ocr-essai.png)"
 [ -n "$(lire MISTRAL_API_KEY)" ] && essai "Mistral Small" custom:mistral mistral-small-latest '"Reponds uniquement : OK"'
 essai "Qwen2.5 7B (texte)" custom:ollama qwen2.5:7b '"Reponds uniquement : OK"'
-essai "PaddleOCR-VL (image)" custom:ollama "AuditAid/PaddleOCR-VL-1.6-0.9B:latest" "[{\"type\":\"text\",\"text\":\"OCR:\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"$IMG\"}}]"
+essai "GLM-OCR (image)" custom:ollama "glm-ocr:latest" "[{\"type\":\"text\",\"text\":\"OCR:\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"$IMG\"}}]"
 echo "   (l'image d'essai contient : DEVIS TEST 4217 / Pompe de relevage)"
 
 echo "7/7 Accès web"

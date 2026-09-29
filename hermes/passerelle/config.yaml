@@ -7,7 +7,7 @@
 # chaque requête au modèle demandé et renvoyer la réponse. Aucun outil.
 #
 # Le SaaS choisit le fournisseur à chaque requête (champ "provider" + "model") :
-#   custom:ollama  -> modèles du VPS (PaddleOCR-VL par défaut pour l'OCR)
+#   custom:ollama  -> modèles du VPS (GLM-OCR par défaut pour l'OCR)
 #   custom:mistral -> API Mistral (UE), clé MISTRAL_API_KEY du .env
 # Doc : https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server/
 #       https://hermes-agent.nousresearch.com/docs/integrations/providers/
