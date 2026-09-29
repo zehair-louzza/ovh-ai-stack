@@ -194,11 +194,7 @@ auxiliary:
     reasoning_effort: none
     max_concurrency: 1
     fallback_chain:
-      - provider: custom
-        model: AuditAid/PaddleOCR-VL-1.6-0.9B:latest
-        base_url: http://ollama:11434/v1
-        api_key: ollama-local
-        timeout: 220
+      # 29/09/2026 : GLM-OCR remplace PaddleOCR-VL-1.6 (lecture fausse par Hermès).
       - provider: custom
         model: glm-ocr:latest
         base_url: http://ollama:11434/v1
