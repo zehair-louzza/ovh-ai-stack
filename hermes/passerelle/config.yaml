@@ -82,6 +82,10 @@ gateway:
     enabled: true
     host: "0.0.0.0"
     port: 8642
-    max_concurrent_runs: 1
+    # 29/09/2026 : 1 refusait en HTTP 429 (« Too many concurrent runs (max 1) »)
+    # toute requête arrivant pendant une autre (OCR de 3 min, essai bloqué),
+    # et le SaaS échouait. Ollama met lui-même les requêtes en file
+    # (OLLAMA_NUM_PARALLEL=1) : Hermès accepte donc 4 runs et laisse attendre.
+    max_concurrent_runs: 4
     # Respecter le modèle demandé par le SaaS.
     direct_model_requests: true
