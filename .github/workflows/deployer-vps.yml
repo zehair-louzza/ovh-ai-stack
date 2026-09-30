@@ -1,0 +1,64 @@
+# Déploiement automatique du VPS OVH à chaque fusion dans main (ADR-011).
+# Secrets du dépôt (Settings > Secrets and variables > Actions) :
+#   VPS_HOST         adresse du VPS
+#   VPS_SSH_KEY      clé privée ed25519 dédiée, limitée à scripts/deployer-vps.sh
+#   VPS_KNOWN_HOSTS  empreinte SSH du VPS (ssh-keyscan), contre l'usurpation
+name: Déployer sur le VPS
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "scripts/windows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deployer-vps
+  cancel-in-progress: false
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fichiers YAML valides
+        run: |
+          python3 -c "import yaml,sys; [yaml.safe_load(open(p)) for p in sys.argv[1:]]; print('YAML OK')" \
+            compose.yaml hermes/config.yaml hermes/passerelle/config.yaml
+      - name: Scripts shell valides
+        run: for f in scripts/*.sh; do bash -n "$f"; done
+
+  deployer:
+    needs: verifier
+    if: github.repository == 'zehair-louzza/ovh-ai-stack'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Secrets présents
+        env:
+          H: ${{ secrets.VPS_HOST }}
+          K: ${{ secrets.VPS_SSH_KEY }}
+          N: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          [ -n "$H" ] && [ -n "$K" ] && [ -n "$N" ] || { echo "::error::Secrets VPS_HOST, VPS_SSH_KEY ou VPS_KNOWN_HOSTS manquants"; exit 1; }
+      - name: Déploiement
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploiement && chmod 600 ~/.ssh/deploiement
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # La clé est limitée côté VPS : la commande lancée est toujours scripts/deployer-vps.sh.
+          ssh -i ~/.ssh/deploiement -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+              -o ServerAliveInterval=30 ubuntu@"$VPS_HOST" deployer
+      - name: Nettoyage de la clé
+        if: always()
+        run: rm -f ~/.ssh/deploiement
