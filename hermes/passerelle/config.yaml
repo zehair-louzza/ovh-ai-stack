@@ -23,6 +23,13 @@ providers:
     api_key: ollama-local
     transport: chat_completions
     default_model: hermes3
+    # 01/10/2026 : sur le processeur du VPS, Ollama (sans streaming) ne renvoie
+    # rien avant la fin du calcul, souvent plus de 90 s. Le détecteur d'appel
+    # figé d'Hermès (90 s par défaut) coupait l'appel puis le relançait
+    # (4 essais), d'où les ReadTimeout du SaaS. Le SaaS applique ses propres
+    # délais (600/420/300 s) : Hermès ne doit pas couper avant.
+    request_timeout_seconds: 900
+    stale_timeout_seconds: 900
     # Hermès exige >= 64 000 jetons de contexte déclarés pour le modèle
     # utilisé. Les modèles d'OCR et d'extraction ne font qu'un appel court
     # (une page, un document) : la valeur déclarée ici sert au contrôle
@@ -50,6 +57,9 @@ providers:
 
 agent:
   reasoning_effort: none
+  # Pas de relance interne : le SaaS a sa propre cascade de modèles, et une
+  # relance refait tout le calcul sur le processeur.
+  api_max_retries: 0
   # Aucun outil : noms relevés dans toolsets.py d'Hermès.
   disabled_toolsets:
     - terminal
@@ -76,6 +86,15 @@ agent:
     - kanban
     - spotify
     - clarify
+
+# Aucun appel IA en plus de la requête du SaaS. Le titre de session et la
+# compression appelaient le modèle par défaut (hermes3), ce qui obligeait Ollama
+# à décharger le modèle en cours (OLLAMA_MAX_LOADED_MODELS=1) puis à le recharger.
+auxiliary:
+  title_generation:
+    enabled: false
+compression:
+  enabled: false
 
 gateway:
   api_server:

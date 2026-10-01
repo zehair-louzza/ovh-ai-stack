@@ -93,7 +93,10 @@ services:
       OLLAMA_KEEP_ALIVE: 30m
       OLLAMA_MAX_LOADED_MODELS: 1
       OLLAMA_NUM_PARALLEL: 1
-      OLLAMA_CONTEXT_LENGTH: 8192
+      # 01/10/2026 : 8192 -> 12288. Consigne d'extraction (~2 500 jetons),
+      # document, consigne propre à Hermès et réponse JSON détaillée dépassaient
+      # 8192 : Ollama tronquait le début du message sans prévenir.
+      OLLAMA_CONTEXT_LENGTH: 12288
     volumes:
       - ollama_data:/root/.ollama
     networks:
