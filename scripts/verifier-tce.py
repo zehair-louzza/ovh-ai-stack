@@ -65,6 +65,10 @@ def main():
         catalog = skills_list()
         catalog = json.loads(catalog) if isinstance(catalog, str) else catalog
         discovered = {row["name"] for row in catalog.get("skills", [])}
+        print("tce_v4 inventaire_hors_tce=" + json.dumps([
+            {"name": row["name"], "category": row.get("category")}
+            for row in catalog.get("skills", []) if row["name"] not in set(names)
+        ], ensure_ascii=False))
         missing = set(names) - discovered
         if missing:
             raise SystemExit("Skills non découverts : " + ", ".join(sorted(missing)))
