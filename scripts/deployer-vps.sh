@@ -39,20 +39,21 @@ CHANGES=$(git diff --name-only "$AVANT" "$APRES" || true)
 
 appliquer() {  # appliquer LISTE_DES_FICHIERS_CHANGÉS
   local ch="$1"
-  docker compose config -q
+  docker compose config -q || return 1
   if printf '%s\n' "$ch" | grep -qE '^(compose\.yaml|\.env\.example)$'; then
     echo "$(horodate) compose.yaml modifié : docker compose up -d"
-    docker compose up -d
+    docker compose up -d || return 1
   fi
   if printf '%s\n' "$ch" | grep -qE '^hermes/'; then
     echo "$(horodate) Hermès modifié : redémarrage de hermes et hermes-passerelle"
-    docker compose up -d --force-recreate hermes hermes-passerelle
+    docker compose up -d --force-recreate hermes hermes-passerelle || return 1
   fi
   if printf '%s\n' "$ch" | grep -qE '^caddy/'; then
     echo "$(horodate) Caddy modifié : validation puis rechargement"
-    docker compose exec -T caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null
-    docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+    docker compose exec -T caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null || return 1
+    docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile || return 1
   fi
+  return 0
 }
 
 controler() {
@@ -67,6 +68,9 @@ controler() {
   echo "   passerelle Hermès : OK"
   docker compose ps --status running --services | grep -qx hermes || { echo "   agent Hermès : ÉCHEC (arrêté)"; return 1; }
   echo "   agent Hermès : OK"
+  if [ -f scripts/verifier-tce.py ]; then
+    docker compose exec -T hermes python3 - < scripts/verifier-tce.py || return 1
+  fi
   code=$(curl -s -o /dev/null -w '%{http_code}' -m 15 https://hermes.blueseatra.com/ || true)
   [ "$code" = 401 ] || { echo "   accès web : ÉCHEC (HTTP $code, attendu 401)"; return 1; }
   echo "   accès web protégé : OK"
@@ -76,12 +80,21 @@ if [ -n "$CHANGES" ]; then
   echo "Fichiers modifiés :"; printf '   %s\n' $CHANGES
 fi
 if appliquer "$CHANGES" && echo "$(horodate) Contrôles" && controler; then
+  if printf '%s\n' "$CHANGES" | grep -qE '^hermes/skills-blueseatra/blueseatra-'; then
+    if ! docker compose exec -T hermes python3 - --smoke < scripts/verifier-tce.py; then
+      echo "$(horodate) ÉCHEC du test modèle TCE : retour au commit ${AVANT:0:7}"
+      git reset -q --hard "$AVANT" || exit 1
+      appliquer "$CHANGES" || exit 1
+      controler || echo "ATTENTION : contrôler le retour arrière manuellement."
+      exit 1
+    fi
+  fi
   echo "$(horodate) DÉPLOIEMENT RÉUSSI : ${APRES:0:7}"
   exit 0
 fi
 
 echo "$(horodate) ÉCHEC : retour au commit ${AVANT:0:7}"
-git reset -q --hard "$AVANT"
-appliquer "$CHANGES" || true
+git reset -q --hard "$AVANT" || { echo "ÉCHEC du retour au commit précédent"; exit 1; }
+appliquer "$CHANGES" || { echo "ÉCHEC de réapplication du commit précédent"; exit 1; }
 controler || echo "ATTENTION : le retour arrière ne répond pas non plus, intervention manuelle nécessaire."
 exit 1
