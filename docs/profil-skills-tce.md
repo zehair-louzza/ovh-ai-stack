@@ -63,6 +63,11 @@ puis l'appelle explicitement par la passerelle, avec effort de raisonnement bas
 pour cette courte extraction. Aucun modèle n'est téléchargé ou supprimé par
 la sonde ; les modèles OCR/vision restent séparés.
 
-Le moteur servi est vérifié dans `runtime.provider` et `runtime.model`, pas dans
-le champ racine `model` qui peut seulement refléter la demande
-([contrat de l'API Hermes](https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server/)).
+Si la réponse contient `runtime.provider` et `runtime.model`, la sonde les
+contrôle ; `custom` est le nom interne normalisé du fournisseur personnalisé.
+Le champ racine `model` peut seulement refléter la demande. Si cette version
+ne fournit pas `runtime`, la sonde indique `identite_reponse_non_attestee` :
+présence dans Ollama et requête explicite sont vérifiées, mais ne constituent pas
+une attestation d'identité par réponse
+([contrat API](https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server/),
+[implémentation](https://github.com/NousResearch/hermes-agent/blob/main/gateway/platforms/api_server_openai_routes.py)).

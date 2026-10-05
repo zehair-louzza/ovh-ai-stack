@@ -69,7 +69,7 @@ class CleanupTest(unittest.TestCase):
 
 
 class ModelSelectionTest(unittest.TestCase):
-    def run_smoke(self, installed, returned_model="gpt-oss:20b"):
+    def run_smoke(self, installed, returned_model="gpt-oss:20b", provider="custom:ollama"):
         observed = []
 
         def response(request, **kwargs):
@@ -79,11 +79,13 @@ class ModelSelectionTest(unittest.TestCase):
             elif url.endswith("/v1/chat/completions"):
                 observed.append(json.loads(request.data))
                 data = {"model": "hermes-agent",
-                        "runtime": {"provider": "custom:ollama", "model": returned_model},
+                        "runtime": {"provider": provider, "model": returned_model},
                         "choices": [{"message": {"content": json.dumps({
                     "quantite_ballon": 1, "capacite_l": 150,
                     "fournir_evier": False, "quantite_prises": None,
                 })}}]}
+                if returned_model is None:
+                    del data["runtime"]
             else:
                 # Stop before the independent SaaS health check, after inference.
                 raise RuntimeError("health-reached")
@@ -111,8 +113,21 @@ class ModelSelectionTest(unittest.TestCase):
         self.assertEqual(payload["response_format"]["type"], "json_schema")
 
     def test_different_returned_model_is_fatal(self):
-        with self.assertRaisesRegex(SystemExit, "runtime_modele_non_confirme"):
+        with self.assertRaisesRegex(SystemExit, "runtime_modele_inattendu"):
             self.run_smoke(["gpt-oss:20b"], returned_model="qwen2.5:7b")
+
+    def test_missing_optional_runtime_is_not_a_model_assertion(self):
+        with patch("builtins.print") as output:
+            self.run_smoke(["gpt-oss:20b"], returned_model=None)
+        output.assert_any_call(
+            "tce_v4 runtime_metadata=indisponible identite_reponse_non_attestee", flush=True)
+
+    def test_custom_provider_canonical_name_is_accepted(self):
+        self.assertEqual(len(self.run_smoke(["gpt-oss:20b"], provider="custom")), 1)
+
+    def test_other_provider_is_rejected(self):
+        with self.assertRaisesRegex(SystemExit, "runtime_modele_inattendu"):
+            self.run_smoke(["gpt-oss:20b"], provider="custom:mistral")
 
 
 if __name__ == "__main__":

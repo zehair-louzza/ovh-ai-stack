@@ -170,11 +170,16 @@ def main():
         with urllib.request.urlopen(request, timeout=240) as response:
             result = json.load(response)
         # Le champ racine "model" peut être un alias ou l'écho de la requête.
-        # Seul runtime identifie le moteur ayant servi le tour (doc API Hermes).
-        runtime = result.get("runtime") or {}
-        if runtime.get("model") != selected_model or runtime.get("provider") != "custom:ollama":
-            raise SystemExit("tce_v4 runtime_modele_non_confirme")
-        print("tce_v4 runtime_confirme=custom:ollama/" + selected_model, flush=True)
+        # runtime est facultatif selon la version du serveur API.
+        # Ne pas confondre identité demandée et identité attestée par la réponse.
+        runtime = result.get("runtime")
+        if runtime is None:
+            print("tce_v4 runtime_metadata=indisponible identite_reponse_non_attestee", flush=True)
+        else:
+            if (not isinstance(runtime, dict) or runtime.get("model") != selected_model
+                    or runtime.get("provider") not in {"custom", "custom:ollama"}):
+                raise SystemExit("tce_v4 runtime_modele_inattendu")
+            print("tce_v4 runtime_modele_confirme=" + selected_model, flush=True)
         content = result["choices"][0]["message"]["content"]
         extracted = json.loads(content)
         if not smoke_schema_valid(extracted):
