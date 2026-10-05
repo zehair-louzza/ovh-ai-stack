@@ -71,7 +71,7 @@ controler() {
   if [ -f scripts/verifier-tce.py ]; then
     # Rejouable même si main est déjà installé : une première mise à jour du
     # script s'exécute encore dans l'ancien shell jusqu'à son terme.
-    docker compose exec -T hermes python3 - --smoke < scripts/verifier-tce.py || return 1
+    docker compose exec -T hermes python3 - --cleanup-legacy --smoke < scripts/verifier-tce.py || return 1
   fi
   code=$(curl -s -o /dev/null -w '%{http_code}' -m 15 https://hermes.blueseatra.com/ || true)
   [ "$code" = 401 ] || { echo "   accès web : ÉCHEC (HTTP $code, attendu 401)"; return 1; }

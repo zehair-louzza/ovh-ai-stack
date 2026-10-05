@@ -12,9 +12,9 @@ Pour toute demande de devis, chiffrage, métré ou révision, charge d'abord
 l'étape utile, puis un lot à la fois et les références nécessaires.
 N'injecte jamais les 20 lots ni le référentiel complet dans un seul appel.
 
-Les anciens noms `extraire-demande-travaux` et `decrire-demande-travaux` sont des
-alias de transition, pas des règles concurrentes. Les instructions de chiffrage
-estimatif anciennes ne doivent plus servir au modèle.
+Les anciens skills d'extraction et de rédaction ont été retirés à la demande de
+l'utilisateur. Utilise les noms `blueseatra-tce-*` ; aucune règle de chiffrage
+estimatif ancienne ne doit servir au modèle.
 
 ## Règles non négociables
 
