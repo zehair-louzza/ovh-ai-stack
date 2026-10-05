@@ -48,6 +48,21 @@ class CleanupTest(unittest.TestCase):
         with self.assertRaises(SystemExit):
             module.obsolete_leaf_name(path, self.root, {OLD})
 
+    def test_smoke_schema_is_separate_from_model_quality(self):
+        value = {"quantite_ballon": 1, "capacite_l": 150,
+                 "fournir_evier": True, "quantite_prises": None}
+        # Boolean true is structurally valid but semantically wrong for the
+        # synthetic example; it must be reported, not mistaken for an outage.
+        self.assertTrue(module.smoke_schema_valid(value))
+        value["quantite_ballon"] = True
+        self.assertFalse(module.smoke_schema_valid(value))
+
+    def test_smoke_rejects_unknown_fields_and_text(self):
+        self.assertFalse(module.smoke_schema_valid({"prix": 10}))
+        value = {"quantite_ballon": "1", "capacite_l": 150,
+                 "fournir_evier": False, "quantite_prises": None}
+        self.assertFalse(module.smoke_schema_valid(value))
+
 
 if __name__ == "__main__":
     unittest.main()

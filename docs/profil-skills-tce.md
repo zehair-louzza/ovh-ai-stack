@@ -36,3 +36,21 @@ Le déploiement redémarre l'agent, puis vérifie que ces noms sont absents de
 
 Pour réactiver un skill, retirer uniquement son nom de la liste puis redéployer.
 Aucun modèle, aucune mémoire ni donnée métier n'est supprimé.
+
+## Sonde et qualité du modèle
+
+La sonde utilise désormais le contrat v4 réellement installé et des définitions
+de champs précises, au lieu d'une consigne générique isolée. Le texte synthétique
+et les quatre résultats attendus restent les mêmes ; aucun résultat attendu
+n'est injecté comme réponse à recopier.
+
+Une réponse HTTP/JSON hors schéma, des skills manquants ou un backend TCE non
+identifié restent bloquants pour le déploiement. Une erreur sémantique du modèle
+brut est journalisée comme avertissement de qualité, avec le score réel, pas comme
+une panne du VPS. Elle ne doit pas annuler un profil de skills fonctionnel lorsque
+le SaaS est présent avec ses validations : la proposition IA ne vaut jamais
+approbation, et les contrôles des devis n'ont pas été affaiblis.
+
+Cette distinction corrige le rollback provoqué par la confusion entre raccordement
+et fourniture d'évier. Le résultat de la sonde ne remplace ni la recette métier
+complète ni la revue du chiffreur.
