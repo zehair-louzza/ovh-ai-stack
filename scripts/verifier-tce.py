@@ -33,6 +33,16 @@ def obsolete_leaf_name(path: Path, local_root: Path, obsolete: set[str]):
     return name
 
 
+def smoke_schema_valid(value):
+    keys = {"quantite_ballon", "capacite_l", "fournir_evier", "quantite_prises"}
+    if not isinstance(value, dict) or set(value) != keys:
+        return False
+    if type(value["fournir_evier"]) is not bool:
+        return False
+    return all(v is None or (type(v) is int and v >= 0)
+               for v in (value[k] for k in keys - {"fournir_evier"}))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--files", action="store_true")
@@ -117,18 +127,25 @@ def main():
         # Requête synthétique locale uniquement. La clé reste dans le processus
         # du conteneur ; aucune valeur sensible, aucun client ni prix n'est envoyé.
         schema = {"type": "object", "additionalProperties": False, "properties": {
-            "quantite_ballon": {"type": "integer"},
-            "capacite_l": {"type": "integer"},
-            "fournir_evier": {"type": "boolean"},
-            "quantite_prises": {"type": "null"},
+            "quantite_ballon": {"type": ["integer", "null"], "minimum": 0,
+                                "description": "Nombre de chauffe-eau demandés, distinct de leur capacité."},
+            "capacite_l": {"type": ["integer", "null"], "minimum": 0,
+                          "description": "Capacité unitaire du chauffe-eau en litres, si donnée."},
+            "fournir_evier": {"type": "boolean", "description": (
+                "Vrai seulement si l'achat ou la fourniture d'un évier est explicitement demandé. "
+                "La fourniture d'un autre appareil ne s'étend pas à l'évier. "
+                "Poser, réparer ou raccorder un évier existant n'est pas fournir un évier neuf.")},
+            "quantite_prises": {"type": ["integer", "null"], "minimum": 0,
+                                "description": "Nombre de prises explicitement donné ; null si à relever."},
         }, "required": ["quantite_ballon", "capacite_l", "fournir_evier", "quantite_prises"]}
+        contract = (root / "blueseatra-tce-core/references/contrat-systeme.md").read_text(encoding="utf-8")
         payload = {
             "model": "qwen2.5:7b", "provider": "custom:ollama", "stream": False,
             "messages": [
-                {"role": "system", "content": (
-                    "Extrais uniquement le JSON demandé. Quantité inconnue=null. "
-                    "Une capacité n'est pas une quantité. Raccorder ne signifie pas fournir. "
-                    "Aucun prix. Schéma : " + json.dumps(schema))},
+                {"role": "system", "content": contract + (
+                    "\nÉtape de lecture ciblée : traite séparément chaque objet et son action. "
+                    "Retourne uniquement les quatre champs de ce schéma, sans explication : "
+                    + json.dumps(schema, ensure_ascii=False))},
                 {"role": "user", "content": (
                     "Fourniture et pose d'un chauffe-eau 150 L. "
                     "Raccorder l'évier existant. Prévoir des prises, nombre à relever.")},
@@ -147,8 +164,12 @@ def main():
             result = json.load(response)
         content = result["choices"][0]["message"]["content"]
         extracted = json.loads(content)
+        if not smoke_schema_valid(extracted):
+            raise SystemExit("tce_v4 transport_schema=ECHEC (sortie non exploitable)")
         expected = {"quantite_ballon": 1, "capacite_l": 150,
                     "fournir_evier": False, "quantite_prises": None}
+        score = sum(extracted[key] == expected[key] for key in expected)
+        print(f"tce_v4 transport_schema=OK modele_brut={score}/4", flush=True)
         if extracted != expected:
             # Diagnostic limité aux quatre champs du test SYNTHÉTIQUE. Aucun
             # texte libre, document client, clé ou prompt n'est journalisé.
@@ -164,8 +185,21 @@ def main():
             print("tce_v4 smoke_champs_supplementaires=" + str(
                 len(set(extracted) - set(expected)) if isinstance(extracted, dict) else -1), flush=True)
             print("tce_v4 smoke_modele_retour=" + str(result.get("model") or "non-indique")[:80], flush=True)
-            raise SystemExit("tce_v4 smoke_modele=ECHEC (réponse non conforme)")
-        print("tce_v4 smoke_modele=qwen2.5:7b resultat=OK (4 assertions)")
+            # Une proposition IA incorrecte ne vaut jamais approbation. Ne pas
+            # confondre cette mesure de qualité avec une panne d'infrastructure :
+            # le SaaS doit être présent avec ses garde-fous et la revue humaine.
+            print("tce_v4 qualite_modele=AVERTISSEMENT revue_metier_obligatoire", flush=True)
+        else:
+            print("tce_v4 qualite_modele=OK (4 assertions)", flush=True)
+        with urllib.request.urlopen(
+            "https://blueseatra-api.onrender.com/api/health", timeout=30
+        ) as response:
+            health = json.load(response)
+        saas = health.get("tce") or {}
+        if (health.get("status") != "healthy" or saas.get("version") != "4.0.0"
+                or saas.get("skills") != 25 or saas.get("sha256") != h.hexdigest()):
+            raise SystemExit("tce_v4 integration_saas=ECHEC (version protégée non identifiée)")
+        print("tce_v4 integration_saas=OK commit=" + str(health.get("commit")), flush=True)
 
 
 if __name__ == "__main__":
