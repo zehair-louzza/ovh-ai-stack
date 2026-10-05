@@ -169,8 +169,12 @@ def main():
         )
         with urllib.request.urlopen(request, timeout=240) as response:
             result = json.load(response)
-        if result.get("model") != selected_model:
-            raise SystemExit("tce_v4 modele_retour_inattendu")
+        # Le champ racine "model" peut être un alias ou l'écho de la requête.
+        # Seul runtime identifie le moteur ayant servi le tour (doc API Hermes).
+        runtime = result.get("runtime") or {}
+        if runtime.get("model") != selected_model or runtime.get("provider") != "custom:ollama":
+            raise SystemExit("tce_v4 runtime_modele_non_confirme")
+        print("tce_v4 runtime_confirme=custom:ollama/" + selected_model, flush=True)
         content = result["choices"][0]["message"]["content"]
         extracted = json.loads(content)
         if not smoke_schema_valid(extracted):

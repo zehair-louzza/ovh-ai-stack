@@ -78,7 +78,9 @@ class ModelSelectionTest(unittest.TestCase):
                 data = {"models": [{"name": model} for model in installed]}
             elif url.endswith("/v1/chat/completions"):
                 observed.append(json.loads(request.data))
-                data = {"model": returned_model, "choices": [{"message": {"content": json.dumps({
+                data = {"model": "hermes-agent",
+                        "runtime": {"provider": "custom:ollama", "model": returned_model},
+                        "choices": [{"message": {"content": json.dumps({
                     "quantite_ballon": 1, "capacite_l": 150,
                     "fournir_evier": False, "quantite_prises": None,
                 })}}]}
@@ -109,7 +111,7 @@ class ModelSelectionTest(unittest.TestCase):
         self.assertEqual(payload["response_format"]["type"], "json_schema")
 
     def test_different_returned_model_is_fatal(self):
-        with self.assertRaisesRegex(SystemExit, "modele_retour_inattendu"):
+        with self.assertRaisesRegex(SystemExit, "runtime_modele_non_confirme"):
             self.run_smoke(["gpt-oss:20b"], returned_model="qwen2.5:7b")
 
 

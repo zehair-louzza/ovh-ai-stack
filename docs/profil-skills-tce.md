@@ -62,3 +62,7 @@ La sonde vérifie la présence réelle de `gpt-oss:20b` dans Ollama avant l'appe
 puis l'appelle explicitement par la passerelle, avec effort de raisonnement bas
 pour cette courte extraction. Aucun modèle n'est téléchargé ou supprimé par
 la sonde ; les modèles OCR/vision restent séparés.
+
+Le moteur servi est vérifié dans `runtime.provider` et `runtime.model`, pas dans
+le champ racine `model` qui peut seulement refléter la demande
+([contrat de l'API Hermes](https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server/)).
