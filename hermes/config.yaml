@@ -273,6 +273,60 @@ delegation:
 skills:
   external_dirs:
     - /opt/blueseatra-skills
+  # 05/10/2026 : désactivation réversible après inventaire réel du VPS.
+  # 25 skills TCE + 28 supports documents/email/GitHub/diagnostic restent actifs.
+  # Ce réglage ne désactive AUCUN toolset et ne supprime aucun fichier.
+  disabled:
+    - claude-code
+    - codex
+    - merge-reconciler
+    - opencode
+    - architecture-diagram
+    - ascii-art
+    - ascii-video
+    - baoyu-infographic
+    - claude-design
+    - comfyui
+    - design-md
+    - excalidraw
+    - humanizer
+    - manim-video
+    - p5js
+    - popular-web-designs
+    - pretext
+    - sketch
+    - songwriting-and-ai-music
+    - touchdesigner-mcp
+    - gif-search
+    - songsee
+    - youtube-content
+    - evaluating-llms-harness
+    - huggingface-hub
+    - llama-cpp
+    - serving-llms-vllm
+    - weights-and-biases
+    - obsidian
+    - airtable
+    - box
+    - document-to-action-items
+    - meeting-action-items
+    - nano-pdf
+    - notion
+    - powerpoint
+    - product-price-monitor
+    - teams-meeting-pipeline
+    - weekly-review-planning
+    - arxiv
+    - blogwatcher
+    - competitor-news-monitor
+    - llm-wiki
+    - research-paper-writing
+    - openhue
+    - xurl
+    - dogfood
+    - inspecting-hermes-desktop-dom
+    - node-inspect-debugger
+    - spike
 
 # API Mistral (UE) pour l'agent principal : /model custom:mistral:mistral-medium-latest
 # Clé : MISTRAL_API_KEY du .env (29/09/2026, ticket Blueseatra #88).

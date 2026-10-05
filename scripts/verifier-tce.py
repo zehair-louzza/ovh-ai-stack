@@ -8,6 +8,7 @@ import shutil
 import urllib.request
 import uuid
 from pathlib import Path
+import yaml
 
 
 def main():
@@ -22,6 +23,11 @@ def main():
     if len(paths) != 25:
         raise SystemExit(f"Pack TCE incomplet : {len(paths)}/25")
     names = [p.parent.name for p in paths]
+    config_path = Path("hermes/config.yaml") if args.files else Path("/opt/data/config.yaml")
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    disabled = set((config.get("skills") or {}).get("disabled") or [])
+    if set(names) & disabled:
+        raise SystemExit("Un skill TCE requis a été désactivé")
     for path in paths:
         text = path.read_text(encoding="utf-8")
         if not text.startswith("---\n") or f"name: {path.parent.name}\n" not in text:
@@ -65,6 +71,9 @@ def main():
         catalog = skills_list()
         catalog = json.loads(catalog) if isinstance(catalog, str) else catalog
         discovered = {row["name"] for row in catalog.get("skills", [])}
+        if disabled & discovered:
+            raise SystemExit("La désactivation de skills n'est pas appliquée")
+        print(f"tce_v4 skills_generaux_desactives={len(disabled)} skills_actifs={len(discovered)}")
         print("tce_v4 inventaire_hors_tce=" + json.dumps([
             {"name": row["name"], "category": row.get("category")}
             for row in catalog.get("skills", []) if row["name"] not in set(names)
@@ -74,6 +83,8 @@ def main():
             raise SystemExit("Skills non découverts : " + ", ".join(sorted(missing)))
         if args.cleanup_legacy and obsolete & discovered:
             raise SystemExit("Anciens skills encore actifs : " + ", ".join(sorted(obsolete & discovered)))
+        if args.cleanup_legacy:
+            print("tce_v4 anciens_skills_actifs=0")
         relevant = sorted(name for name in discovered if any(
             word in name for word in ("devis", "travaux", "catalogue", "securite-donnees")))
         print("tce_v4 autres_skills_metier=" + json.dumps(relevant, ensure_ascii=False))
