@@ -6,6 +6,7 @@
 name: Déployer sur le VPS
 
 on:
+  pull_request:
   push:
     branches: [main]
     paths-ignore:
@@ -37,7 +38,7 @@ jobs:
 
   deployer:
     needs: verifier
-    if: github.repository == 'zehair-louzza/ovh-ai-stack'
+    if: github.repository == 'zehair-louzza/ovh-ai-stack' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
