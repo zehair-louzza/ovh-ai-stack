@@ -69,7 +69,9 @@ controler() {
   docker compose ps --status running --services | grep -qx hermes || { echo "   agent Hermès : ÉCHEC (arrêté)"; return 1; }
   echo "   agent Hermès : OK"
   if [ -f scripts/verifier-tce.py ]; then
-    docker compose exec -T hermes python3 - < scripts/verifier-tce.py || return 1
+    # Rejouable même si main est déjà installé : une première mise à jour du
+    # script s'exécute encore dans l'ancien shell jusqu'à son terme.
+    docker compose exec -T hermes python3 - --cleanup-legacy --smoke < scripts/verifier-tce.py || return 1
   fi
   code=$(curl -s -o /dev/null -w '%{http_code}' -m 15 https://hermes.blueseatra.com/ || true)
   [ "$code" = 401 ] || { echo "   accès web : ÉCHEC (HTTP $code, attendu 401)"; return 1; }
@@ -80,15 +82,6 @@ if [ -n "$CHANGES" ]; then
   echo "Fichiers modifiés :"; printf '   %s\n' $CHANGES
 fi
 if appliquer "$CHANGES" && echo "$(horodate) Contrôles" && controler; then
-  if printf '%s\n' "$CHANGES" | grep -qE '^hermes/skills-blueseatra/blueseatra-'; then
-    if ! docker compose exec -T hermes python3 - --smoke < scripts/verifier-tce.py; then
-      echo "$(horodate) ÉCHEC du test modèle TCE : retour au commit ${AVANT:0:7}"
-      git reset -q --hard "$AVANT" || exit 1
-      appliquer "$CHANGES" || exit 1
-      controler || echo "ATTENTION : contrôler le retour arrière manuellement."
-      exit 1
-    fi
-  fi
   echo "$(horodate) DÉPLOIEMENT RÉUSSI : ${APRES:0:7}"
   exit 0
 fi

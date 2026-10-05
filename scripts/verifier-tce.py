@@ -3,6 +3,8 @@ import argparse
 import hashlib
 import json
 import os
+import re
+import shutil
 import urllib.request
 import uuid
 from pathlib import Path
@@ -12,6 +14,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--files", action="store_true")
     parser.add_argument("--smoke", action="store_true")
+    parser.add_argument("--cleanup-legacy", action="store_true")
     args = parser.parse_args()
     root = (Path("hermes/skills-blueseatra") if args.files
             else Path("/opt/blueseatra-skills"))
@@ -38,14 +41,42 @@ def main():
             h.update(path.read_bytes())
     print(f"tce_v4 fichiers=25 schemas=4 sha256={h.hexdigest()}")
     if not args.files:
+        obsolete = {"extraire-demande-travaux", "decrire-demande-travaux"}
+        if args.cleanup_legacy:
+            # Retrait autorisé de ces DEUX anciens skills uniquement. Les
+            # éventuelles copies du volume sont archivées hors de l'index ;
+            # mémoire et skills généraux ne sont jamais touchés.
+            local_root = Path("/opt/data/skills")
+            backup = Path("/opt/data/backups/tce-v4-legacy") / str(uuid.uuid4())
+            for path in sorted(local_root.rglob("SKILL.md")):
+                match = re.search(r"^name:\s*[\"']?([a-z0-9-]+)[\"']?\s*$",
+                                  path.read_text(encoding="utf-8"), re.M)
+                if not match or match.group(1) not in obsolete:
+                    continue
+                folder = path.parent
+                if not folder.resolve().is_relative_to(local_root.resolve()) or folder.is_symlink():
+                    raise SystemExit("Ancien skill en lien symbolique : retrait manuel requis")
+                target = backup / folder.relative_to(local_root)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(folder), str(target))
+                print("tce_v4 ancien_skill_archive=" + match.group(1))
         # API de découverte Hermes, aucun appel IA et aucun secret affiché.
         from tools.skills_tool import skills_list, skill_view
         catalog = skills_list()
         catalog = json.loads(catalog) if isinstance(catalog, str) else catalog
         discovered = {row["name"] for row in catalog.get("skills", [])}
+        print("tce_v4 inventaire_hors_tce=" + json.dumps([
+            {"name": row["name"], "category": row.get("category")}
+            for row in catalog.get("skills", []) if row["name"] not in set(names)
+        ], ensure_ascii=False))
         missing = set(names) - discovered
         if missing:
             raise SystemExit("Skills non découverts : " + ", ".join(sorted(missing)))
+        if args.cleanup_legacy and obsolete & discovered:
+            raise SystemExit("Anciens skills encore actifs : " + ", ".join(sorted(obsolete & discovered)))
+        relevant = sorted(name for name in discovered if any(
+            word in name for word in ("devis", "travaux", "catalogue", "securite-donnees")))
+        print("tce_v4 autres_skills_metier=" + json.dumps(relevant, ensure_ascii=False))
         viewed = skill_view("blueseatra-tce-core")
         if "Contrat" not in str(viewed):
             raise SystemExit("Noyau introuvable via skill_view")

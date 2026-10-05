@@ -267,8 +267,8 @@ delegation:
 # API chat OpenAI-compatible (port 8642). La clé reste dans .env (API_SERVER_KEY).
 # Env Compose prime sur ce bloc.
 # https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server
-# Skills devis Blueseatra, prioritaires (voir SOUL.md) : extraire-demande-travaux
-# et decrire-demande-travaux. Les skills fournis avec Hermès restent dans
+# Skills devis Blueseatra : noyau blueseatra-tce-core et 24 modules à la demande.
+# Les deux anciens skills sont retirés. Les skills fournis avec Hermès restent dans
 # /opt/data/skills. En cas de doublon de nom, le skill local l'emporte.
 skills:
   external_dirs:
