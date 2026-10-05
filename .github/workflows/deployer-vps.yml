@@ -6,11 +6,11 @@
 name: Déployer sur le VPS
 
 on:
+  pull_request:
   push:
     branches: [main]
     paths-ignore:
       - "docs/**"
-      - "**/*.md"
       - "scripts/windows/**"
   workflow_dispatch:
 
@@ -33,10 +33,12 @@ jobs:
             compose.yaml hermes/config.yaml hermes/passerelle/config.yaml
       - name: Scripts shell valides
         run: for f in scripts/*.sh; do bash -n "$f"; done
+      - name: Pack TCE valide
+        run: python3 scripts/verifier-tce.py --files
 
   deployer:
     needs: verifier
-    if: github.repository == 'zehair-louzza/ovh-ai-stack'
+    if: github.repository == 'zehair-louzza/ovh-ai-stack' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
