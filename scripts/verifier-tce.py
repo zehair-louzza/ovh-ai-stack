@@ -150,6 +150,20 @@ def main():
         expected = {"quantite_ballon": 1, "capacite_l": 150,
                     "fournir_evier": False, "quantite_prises": None}
         if extracted != expected:
+            # Diagnostic limité aux quatre champs du test SYNTHÉTIQUE. Aucun
+            # texte libre, document client, clé ou prompt n'est journalisé.
+            observed = {}
+            for key in expected:
+                value = extracted.get(key) if isinstance(extracted, dict) else None
+                observed[key] = {
+                    "present": isinstance(extracted, dict) and key in extracted,
+                    "type": type(value).__name__,
+                    "value": value if type(value) in (int, float, bool, type(None)) else "[non-primitif]",
+                }
+            print("tce_v4 smoke_observe=" + json.dumps(observed), flush=True)
+            print("tce_v4 smoke_champs_supplementaires=" + str(
+                len(set(extracted) - set(expected)) if isinstance(extracted, dict) else -1), flush=True)
+            print("tce_v4 smoke_modele_retour=" + str(result.get("model") or "non-indique")[:80], flush=True)
             raise SystemExit("tce_v4 smoke_modele=ECHEC (réponse non conforme)")
         print("tce_v4 smoke_modele=qwen2.5:7b resultat=OK (4 assertions)")
 
