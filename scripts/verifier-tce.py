@@ -3,12 +3,34 @@ import argparse
 import hashlib
 import json
 import os
-import re
 import shutil
 import urllib.request
 import uuid
 from pathlib import Path
 import yaml
+
+
+def obsolete_leaf_name(path: Path, local_root: Path, obsolete: set[str]):
+    """Identifier un ancien skill, jamais un dossier collectif ni une citation."""
+    root = local_root.resolve()
+    folder = path.parent
+    if path.is_symlink() or folder.is_symlink() or not path.resolve().is_relative_to(root):
+        return None
+    lines = path.read_text(encoding="utf-8").splitlines()
+    if not lines or lines[0] != "---":
+        return None
+    end = next((i for i, line in enumerate(lines[1:], 1) if line == "---"), None)
+    if end is None:
+        return None
+    front = yaml.safe_load("\n".join(lines[1:end])) or {}
+    name = front.get("name") if isinstance(front, dict) else None
+    if name not in obsolete:
+        return None
+    if folder.resolve() == root or folder.name != name:
+        raise SystemExit("Ancien skill dans un dossier ambigu : archivage refusé")
+    if any(child != path for child in folder.rglob("SKILL.md")):
+        raise SystemExit("Ancien skill dans un dossier collectif : archivage refusé")
+    return name
 
 
 def main():
@@ -55,17 +77,16 @@ def main():
             local_root = Path("/opt/data/skills")
             backup = Path("/opt/data/backups/tce-v4-legacy") / str(uuid.uuid4())
             for path in sorted(local_root.rglob("SKILL.md")):
-                match = re.search(r"^name:\s*[\"']?([a-z0-9-]+)[\"']?\s*$",
-                                  path.read_text(encoding="utf-8"), re.M)
-                if not match or match.group(1) not in obsolete:
+                if not path.exists():
+                    continue
+                name = obsolete_leaf_name(path, local_root, obsolete)
+                if name is None:
                     continue
                 folder = path.parent
-                if not folder.resolve().is_relative_to(local_root.resolve()) or folder.is_symlink():
-                    raise SystemExit("Ancien skill en lien symbolique : retrait manuel requis")
                 target = backup / folder.relative_to(local_root)
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.move(str(folder), str(target))
-                print("tce_v4 ancien_skill_archive=" + match.group(1))
+                print("tce_v4 ancien_skill_archive=" + name)
         # API de découverte Hermes, aucun appel IA et aucun secret affiché.
         from tools.skills_tool import skills_list, skill_view
         catalog = skills_list()
