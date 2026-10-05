@@ -54,3 +54,20 @@ approbation, et les contrôles des devis n'ont pas été affaiblis.
 Cette distinction corrige le rollback provoqué par la confusion entre raccordement
 et fourniture d'évier. Le résultat de la sonde ne remplace ni la recette métier
 complète ni la revue du chiffreur.
+
+## Modèle texte demandé
+
+Le 05/10/2026, l'utilisateur a demandé GPT-OSS à la place de Qwen pour le texte.
+La sonde vérifie la présence réelle de `gpt-oss:20b` dans Ollama avant l'appel,
+puis l'appelle explicitement par la passerelle, avec effort de raisonnement bas
+pour cette courte extraction. Aucun modèle n'est téléchargé ou supprimé par
+la sonde ; les modèles OCR/vision restent séparés.
+
+Si la réponse contient `runtime.provider` et `runtime.model`, la sonde les
+contrôle ; `custom` est le nom interne normalisé du fournisseur personnalisé.
+Le champ racine `model` peut seulement refléter la demande. Si cette version
+ne fournit pas `runtime`, la sonde indique `identite_reponse_non_attestee` :
+présence dans Ollama et requête explicite sont vérifiées, mais ne constituent pas
+une attestation d'identité par réponse
+([contrat API](https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server/),
+[implémentation](https://github.com/NousResearch/hermes-agent/blob/main/gateway/platforms/api_server_openai_routes.py)).
