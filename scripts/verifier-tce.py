@@ -124,6 +124,12 @@ def main():
             raise SystemExit("Noyau introuvable via skill_view")
         print("tce_v4 decouverte_hermes=25 noyau_charge=ok")
     if args.smoke:
+        selected_model = "gpt-oss:20b"
+        with urllib.request.urlopen("http://ollama:11434/api/tags", timeout=15) as response:
+            installed = {item.get("name") for item in json.load(response).get("models", [])}
+        if selected_model not in installed:
+            raise SystemExit("tce_v4 modele_requis_absent=" + selected_model)
+        print("tce_v4 modele_installe=" + selected_model, flush=True)
         # Requête synthétique locale uniquement. La clé reste dans le processus
         # du conteneur ; aucune valeur sensible, aucun client ni prix n'est envoyé.
         schema = {"type": "object", "additionalProperties": False, "properties": {
@@ -140,7 +146,8 @@ def main():
         }, "required": ["quantite_ballon", "capacite_l", "fournir_evier", "quantite_prises"]}
         contract = (root / "blueseatra-tce-core/references/contrat-systeme.md").read_text(encoding="utf-8")
         payload = {
-            "model": "qwen2.5:7b", "provider": "custom:ollama", "stream": False,
+            "model": selected_model, "provider": "custom:ollama", "stream": False,
+            "model_options": {"reasoning_effort": "low"},
             "messages": [
                 {"role": "system", "content": contract + (
                     "\nÉtape de lecture ciblée : traite séparément chaque objet et son action. "
@@ -162,6 +169,8 @@ def main():
         )
         with urllib.request.urlopen(request, timeout=240) as response:
             result = json.load(response)
+        if result.get("model") != selected_model:
+            raise SystemExit("tce_v4 modele_retour_inattendu")
         content = result["choices"][0]["message"]["content"]
         extracted = json.loads(content)
         if not smoke_schema_valid(extracted):
@@ -169,7 +178,7 @@ def main():
         expected = {"quantite_ballon": 1, "capacite_l": 150,
                     "fournir_evier": False, "quantite_prises": None}
         score = sum(extracted[key] == expected[key] for key in expected)
-        print(f"tce_v4 transport_schema=OK modele_brut={score}/4", flush=True)
+        print(f"tce_v4 transport_schema=OK modele={selected_model} modele_brut={score}/4", flush=True)
         if extracted != expected:
             # Diagnostic limité aux quatre champs du test SYNTHÉTIQUE. Aucun
             # texte libre, document client, clé ou prompt n'est journalisé.

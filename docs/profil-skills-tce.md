@@ -54,3 +54,11 @@ approbation, et les contrôles des devis n'ont pas été affaiblis.
 Cette distinction corrige le rollback provoqué par la confusion entre raccordement
 et fourniture d'évier. Le résultat de la sonde ne remplace ni la recette métier
 complète ni la revue du chiffreur.
+
+## Modèle texte demandé
+
+Le 05/10/2026, l'utilisateur a demandé GPT-OSS à la place de Qwen pour le texte.
+La sonde vérifie la présence réelle de `gpt-oss:20b` dans Ollama avant l'appel,
+puis l'appelle explicitement par la passerelle, avec effort de raisonnement bas
+pour cette courte extraction. Aucun modèle n'est téléchargé ou supprimé par
+la sonde ; les modèles OCR/vision restent séparés.

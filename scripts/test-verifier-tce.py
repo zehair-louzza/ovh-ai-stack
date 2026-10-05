@@ -1,8 +1,12 @@
 """Tests d'archivage : aucune suppression hors des deux anciens répertoires."""
 import importlib.util
+import contextlib
+import io
+import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location("verifier", Path(__file__).with_name("verifier-tce.py"))
 module = importlib.util.module_from_spec(spec)
@@ -62,6 +66,51 @@ class CleanupTest(unittest.TestCase):
         value = {"quantite_ballon": "1", "capacite_l": 150,
                  "fournir_evier": False, "quantite_prises": None}
         self.assertFalse(module.smoke_schema_valid(value))
+
+
+class ModelSelectionTest(unittest.TestCase):
+    def run_smoke(self, installed, returned_model="gpt-oss:20b"):
+        observed = []
+
+        def response(request, **kwargs):
+            url = request if isinstance(request, str) else request.full_url
+            if url.endswith("/api/tags"):
+                data = {"models": [{"name": model} for model in installed]}
+            elif url.endswith("/v1/chat/completions"):
+                observed.append(json.loads(request.data))
+                data = {"model": returned_model, "choices": [{"message": {"content": json.dumps({
+                    "quantite_ballon": 1, "capacite_l": 150,
+                    "fournir_evier": False, "quantite_prises": None,
+                })}}]}
+            else:
+                # Stop before the independent SaaS health check, after inference.
+                raise RuntimeError("health-reached")
+            return io.BytesIO(json.dumps(data).encode())
+
+        with patch("sys.argv", ["verifier-tce.py", "--files", "--smoke"]), \
+                patch.dict(module.os.environ, {"API_SERVER_KEY": "synthetic-test-key"}), \
+                patch.object(module.urllib.request, "urlopen", side_effect=response), \
+                contextlib.redirect_stdout(io.StringIO()):
+            try:
+                module.main()
+            except RuntimeError as exc:
+                if str(exc) != "health-reached":
+                    raise
+        return observed
+
+    def test_missing_gpt_model_stops_before_inference(self):
+        with self.assertRaisesRegex(SystemExit, "modele_requis_absent=gpt-oss:20b"):
+            self.run_smoke(["qwen2.5:7b"])
+
+    def test_gpt_is_requested_with_low_effort(self):
+        payload, = self.run_smoke(["gpt-oss:20b"])
+        self.assertEqual(payload["model"], "gpt-oss:20b")
+        self.assertEqual(payload["model_options"]["reasoning_effort"], "low")
+        self.assertEqual(payload["response_format"]["type"], "json_schema")
+
+    def test_different_returned_model_is_fatal(self):
+        with self.assertRaisesRegex(SystemExit, "modele_retour_inattendu"):
+            self.run_smoke(["gpt-oss:20b"], returned_model="qwen2.5:7b")
 
 
 if __name__ == "__main__":
