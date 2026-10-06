@@ -39,6 +39,11 @@ providers:
       "glm-ocr:latest": { context_length: 65536 }
       "LightOnOCR-2:1b": { context_length: 65536 }
       "olmocr2:7b-q8": { context_length: 65536 }
+      # 07/10/2026 : noms EXACTS envoyés par le site (ai_service.py : HERMES_OCR_SECONDARY_MODEL,
+      # HERMES_OCR_TERTIARY_MODEL, HERMES_ESCALATION_VISION_MODEL). Sans eux, la passerelle
+      # répondait HTTP 500 en moins d'une seconde pour LightOnOCR, olmOCR et l'analyse approfondie.
+      "maternion/LightOnOCR-2:1b": { context_length: 65536 }
+      "richardyoung/olmocr2:7b-q8": { context_length: 65536 }
       "qwen2.5vl:7b": { context_length: 128000 }
       "qwen2.5:7b": { context_length: 65536 }
       "gpt-oss:20b": { context_length: 131072 }
