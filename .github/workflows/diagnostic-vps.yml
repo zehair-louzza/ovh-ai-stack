@@ -1,0 +1,36 @@
+# Diagnostic du VPS en LECTURE SEULE (ADR-011) : état des conteneurs, modèles chargés par Ollama,
+# consommation et durée des dernières requêtes. Se lance à la main depuis l'onglet Actions.
+# Utilise la même clé SSH limitée que le déploiement : le VPS n'exécute que scripts/deployer-vps.sh,
+# ici dans son mode « diagnostic » (aucune écriture, aucun redémarrage, aucun secret).
+name: Diagnostic du VPS
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: diagnostic-vps
+  cancel-in-progress: false
+
+jobs:
+  diagnostic:
+    if: github.repository == 'zehair-louzza/ovh-ai-stack'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Diagnostic
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploiement && chmod 600 ~/.ssh/deploiement
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploiement -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+              ubuntu@"$VPS_HOST" diagnostic
+      - name: Nettoyage de la clé
+        if: always()
+        run: rm -f ~/.ssh/deploiement

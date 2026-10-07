@@ -14,6 +14,24 @@ set -euo pipefail
 DEPOT="$HOME/ovh-ai-stack"
 URL="https://github.com/zehair-louzza/ovh-ai-stack.git"
 cd "$DEPOT"
+
+# Mode diagnostic (ADR-011, 07/10/2026) : `ssh ... diagnostic`. LECTURE SEULE : aucune écriture,
+# aucun redémarrage, aucun secret affiché. Sortie : état des conteneurs, modèles chargés par
+# Ollama, consommation, et le journal des requêtes d'Ollama (ligne [GIN] : méthode, chemin,
+# code, durée, jamais le contenu des documents).
+if [ "${SSH_ORIGINAL_COMMAND:-}" = "diagnostic" ]; then
+  echo "=== $(date '+%d/%m/%Y %H:%M:%S') — VPS $(hostname) — commit $(git rev-parse --short HEAD) ==="
+  echo; echo "--- docker compose ps";                 docker compose ps --format 'table {{.Service}}\t{{.Status}}' 2>&1 | head -20
+  echo; echo "--- ollama ps (modèles chargés en mémoire)"; docker compose exec -T ollama ollama ps 2>&1 | head -10
+  echo; echo "--- docker stats (instantané)";         docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}' 2>&1 | head -12
+  echo; echo "--- mémoire et charge";                 free -h | head -3; uptime
+  echo; echo "--- requêtes Ollama des 120 dernières minutes (dernières 60)"
+  docker compose logs --since 120m --no-log-prefix ollama 2>&1 | grep -E '\[GIN\]' | sed -E 's/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/x.x.x.x/' | tail -60
+  echo; echo "--- passerelle Hermès : nombre d'erreurs et d'avertissements (120 min)"
+  docker compose logs --since 120m --no-log-prefix hermes-passerelle 2>&1 | grep -ciE 'error|timeout|429|500' || true
+  exit 0
+fi
+
 exec 9>/tmp/ovh-ai-stack-deploiement.lock
 flock -w 600 9 || { echo "ÉCHEC : un autre déploiement est en cours"; exit 1; }
 
