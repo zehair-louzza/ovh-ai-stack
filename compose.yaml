@@ -172,7 +172,10 @@ services:
       API_SERVER_KEY: ${API_SERVER_KEY:?définir API_SERVER_KEY dans .env}
     volumes:
       - hermes_data:/opt/data
-      - ./hermes/config.yaml:/opt/data/config.yaml:ro
+      # 09/10/2026 : plus de montage de ./hermes/config.yaml en lecture seule.
+      # Le tableau de bord (hermes.blueseatra.com) doit pouvoir enregistrer le
+      # modèle choisi : la configuration de l'agent vit dans le volume
+      # hermes_data (/opt/data/config.yaml, propriétaire 10000:10000).
       - ./hermes/SOUL.md:/opt/data/SOUL.md:ro
       # Skills devis Blueseatra (29/09/2026) : dossier externe en lecture seule.
       # /opt/data/skills n'est plus masqué : les skills fournis avec Hermès

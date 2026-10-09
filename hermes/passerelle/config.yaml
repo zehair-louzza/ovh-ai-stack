@@ -113,3 +113,13 @@ gateway:
     max_concurrent_runs: 4
     # Respecter le modèle demandé par le SaaS.
     direct_model_requests: true
+
+# 10/10/2026 : extension OpenCode Free (fournisseur « opencode-free ») pour le
+# SaaS Blueseatra (Réglages > Intégrations > OpenCode Free). Installée dans le
+# volume hermes_passerelle_data (/opt/data/plugins/oc-free-provider) par
+#   docker compose exec hermes-passerelle hermes plugins install oc-free-provider
+# Ce fichier étant monté en lecture seule, l'activation se déclare ici.
+# Le SaaS masque toujours le texte envoyé (masquage RGPD, Blueseatra #194).
+plugins:
+  enabled:
+    - oc-free-provider
