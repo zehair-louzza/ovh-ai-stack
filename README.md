@@ -78,6 +78,11 @@ Guide unique, commandes **une par une** (PowerShell casse les pipes multi-lignes
 
 → **[docs/GUIDE-POWERSHELL.md](docs/GUIDE-POWERSHELL.md)**
 
+## Exploitation
+
+- [docs/EXPLOITATION-HERMES.md](docs/EXPLOITATION-HERMES.md) : modèle du tableau de bord, clés API, extensions de la passerelle (OpenCode Free), modèles Ollama, dépôt du VPS propre
+- [docs/decisions/ADR-013-config-agent-volume-et-opencode-free.md](docs/decisions/ADR-013-config-agent-volume-et-opencode-free.md)
+
 ## RGPD / sécurité
 
 - [docs/RGPD.md](docs/RGPD.md)
@@ -91,6 +96,8 @@ Guide unique, commandes **une par une** (PowerShell casse les pipes multi-lignes
 - [Hermes Agent Docker](https://hermes-agent.nousresearch.com/docs/user-guide/docker)
 - [Hermes configuration](https://hermes-agent.nousresearch.com/docs/user-guide/configuration)
 - [Hermes API server](https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server)
+- [Hermes extension oc-free-provider](https://hermes-agent.nousresearch.com/docs/plugins/oc-free-provider)
+- [OpenCode Zen : modèles et données](https://opencode.ai/docs/zen/)
 - [n8n Docker Compose](https://docs.n8n.io/deploy/host-n8n/install-options/use-a-cloud-provider/use-docker-compose)
 - [Caddy matchers](https://caddyserver.com/docs/caddyfile/matchers)
 - [gpt-oss](https://ollama.com/library/gpt-oss) · [qwen2.5vl](https://ollama.com/library/qwen2.5vl) · [hermes3](https://ollama.com/library/hermes3)
