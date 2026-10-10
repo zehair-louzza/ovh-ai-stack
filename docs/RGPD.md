@@ -33,6 +33,10 @@ Pas de réentraînement de modèle, pas de cession, pas de profiling commercial.
 - Base : Supabase `eu-west-1`
 - API métier : Render Frankfurt
 - **Interdit par défaut** : envoyer un document client vers OpenAI / Gemini / Anthropic / portail Nous. Un tenant peut activer un provider cloud dans Blueseatra : cela devient un transfert hors UE à documenter (CCT + information du client)
+- **Mistral** (`custom:mistral`, UE) et **OpenCode Free** (`opencode-free`, modèles hébergés aux États-Unis) sont accessibles par la passerelle depuis le 09/10/2026.
+  - Blueseatra masque le texte de **tous** les appels IA avant l'envoi : adresses, noms de sites, clients, donneurs d'ordre, personnes, identifiants.
+  - Aucune image n'est envoyée hors du VPS.
+  - Plusieurs modèles gratuits d'OpenCode peuvent réutiliser les données ([conditions OpenCode Zen](https://opencode.ai/docs/zen/)) : à réserver aux essais. OpenCode Free reste un transfert hors UE à documenter.
 
 ## Mesures techniques (art. 32)
 
