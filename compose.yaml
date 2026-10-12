@@ -148,7 +148,14 @@ services:
       - "host.docker.internal:host-gateway"
 
   hermes:
-    image: nousresearch/hermes-agent:latest
+    # 12/10/2026 : image dérivée avec la voix locale (faster-whisper, Piper),
+    # voir images/hermes-voix/Dockerfile. pull_policy: build = construite sur le
+    # VPS, jamais téléchargée ; « docker compose pull » l'ignore. Pour suivre
+    # une nouvelle version d'Hermès : docker compose build --pull hermes.
+    build:
+      context: ./images/hermes-voix
+    image: ovh-ai-stack/hermes-voix:local
+    pull_policy: build
     restart: unless-stopped
     command: ["gateway", "run"]
     env_file:
